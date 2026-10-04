@@ -1,4 +1,4 @@
-﻿package com.darza.darza.entity;
+package com.darza.darza.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
