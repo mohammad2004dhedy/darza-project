@@ -23,12 +23,12 @@ public class Property {
     private PropertyType propertyType;
     @Column(name = "listing_type",nullable = false)
     @Enumerated(EnumType.STRING)
-    private ListingType listingType=ListingType.RENT;
+    private ListingType listingType;
     @Column(name = "price", nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
     @Column(name = "currency",nullable = false)
     @Enumerated(EnumType.STRING)
-    private Currency currency=Currency.ILS;
+    private Currency currency;
     @Column(name = "rent_period",nullable = true)
     @Enumerated(EnumType.STRING)
     private RentPeriod rentPeriod;
@@ -43,7 +43,7 @@ public class Property {
     @Column(name = "has_balcony",nullable = true)
     private Boolean hasBalcony;
     @JoinColumn(name = "town_id",nullable = false)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Town town;
     @Column(name = "address",nullable = true)
     private String address;
@@ -61,13 +61,13 @@ public class Property {
     @Column(name = "approved_at",nullable = true)
     private Instant approvedAt;
     @JoinColumn(name = "approved_by",nullable = true)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User approvedBy;
     @CreationTimestamp
-    @Column(name = "created_at",nullable = false)
+    @Column(name = "created_at",nullable = false,updatable = false)
     private Instant createdAt;
     @JoinColumn(name = "created_by",nullable = false)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User createdBy;
     @Column(name = "updated_at",nullable = false)
     @UpdateTimestamp

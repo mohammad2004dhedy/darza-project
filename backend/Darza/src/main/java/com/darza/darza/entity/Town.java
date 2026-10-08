@@ -8,8 +8,8 @@ public class Town {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @JoinColumn(name = "town_id",nullable = false)
-    @ManyToOne
+    @JoinColumn(name = "city_id",nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private City city;
     @Column(name = "name",nullable = false)
     private String name;

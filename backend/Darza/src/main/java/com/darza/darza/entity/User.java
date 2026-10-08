@@ -1,6 +1,8 @@
 package com.darza.darza.entity;
 
+import com.darza.darza.enums.Role;
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -13,22 +15,23 @@ public class User {
     @Column(name = "display_name", nullable = false)
     private String displayName;
     @Column(name = "email", nullable = false,unique = true)
-    private String Email;
+    private String email;
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
     @Column(name = "phone_number" , nullable = false)
     private String phoneNumber;
-    @Column(name = "role")
+    @Column(name = "role",nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role=Role.PUBLISHER;
-    @JoinColumn(name = "town_id",nullable = false)
-    @ManyToOne
+    @JoinColumn(name = "town_id",nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Town town;
     @Column(name = "address",nullable = true)
     private String address;
     @Column(name = "profile_image_path",nullable = true)
     private String profileImagePath;
-    @Column(name = "created_at",nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at",nullable = false,updatable = false)
     private Instant createdAt;
 
     public Long getId() {
@@ -44,11 +47,11 @@ public class User {
     }
 
     public String getEmail() {
-        return Email;
+        return email;
     }
 
     public void setEmail(String email) {
-        Email = email;
+        this.email = email;
     }
 
     public String getPasswordHash() {
@@ -101,9 +104,5 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

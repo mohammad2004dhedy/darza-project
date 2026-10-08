@@ -1,4 +1,4 @@
-package com.darza.darza.entity;
+package com.darza.darza.enums;
 
 public enum Role {
     ADMIN,
