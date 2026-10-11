@@ -1,0 +1,3 @@
+ALTER TABLE properties
+ALTER COLUMN rooms TYPE INTEGER,
+    ALTER COLUMN bathrooms TYPE INTEGER;
