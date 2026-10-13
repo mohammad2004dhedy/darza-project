@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface PropertyRepository extends JpaRepository<Property,Long> {
     @Override
-    @EntityGraph(attributePaths = {"town","town.city","approvedBy","createdBy"})
+    @EntityGraph(attributePaths = {"town","town.city","createdBy"})
     Optional<Property> findById(Long aLong);
 
     @EntityGraph(attributePaths = {"town","town.city","createdBy"})
