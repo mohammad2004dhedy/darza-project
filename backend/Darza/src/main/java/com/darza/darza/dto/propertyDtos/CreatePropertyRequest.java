@@ -13,6 +13,7 @@ public record CreatePropertyRequest(
         @NotBlank(message = "يجب ادخال عنوان")
         @Size(max = 150,message = "نص العنوان يجب ان لا يتخطى 150 حرف")
         String title,
+        @Size(max = 2000,message = "الطول المسموح للوصف هو 2000 حرف كحد اقصى")
         String description,
         @NotNull(message = "يجب اختيار نوع العقار")
         PropertyType propertyType,
@@ -27,7 +28,7 @@ public record CreatePropertyRequest(
 
         RentPeriod rentPeriod,
         @PositiveOrZero(message = "مساحة العقار لا يمكن ان تكون اقل من صفر")
-        @Digits(integer = 8,fraction = 2)// هون وفي البرايس لو المستخدم دخل فقط عدد صحيح بدون فراكشنز او فرانشكنز اكثر من 2 هل رح يرفض ؟
+        @Digits(integer = 8,fraction = 2)
         BigDecimal areaSize,
         @PositiveOrZero(message = "لا يمكن ان يكون عدد الغرف اقل من صفر")
         Integer rooms,
@@ -51,7 +52,7 @@ public record CreatePropertyRequest(
         BigDecimal longitude,
 
         @NotEmpty(message = "يجب ادخال صورة واحدة على الاقل")
-        @Size(max = 8,min = 1, message = "اقصى عدد مسموح من الصور للرفع هو 10 صور او صورة واحدة على الاقل")
+        @Size(max = 8,min = 1, message = "اقصى عدد مسموح من الصور للرفع هو 8 صور او صورة واحدة على الاقل")
         List<@NotBlank(message = "لا يمكن رفع صورة فارغة") String> imagePaths
 
 ) {

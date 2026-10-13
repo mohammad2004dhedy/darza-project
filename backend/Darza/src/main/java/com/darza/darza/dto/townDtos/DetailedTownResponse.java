@@ -1,6 +1,6 @@
 package com.darza.darza.dto.townDtos;
 
-public record PropertyTownResponse(
+public record DetailedTownResponse(
         Long townId,
         String townName,
         Long cityId,

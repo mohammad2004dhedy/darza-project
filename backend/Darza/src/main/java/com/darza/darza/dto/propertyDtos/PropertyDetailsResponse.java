@@ -1,7 +1,7 @@
 package com.darza.darza.dto.propertyDtos;
 
 import com.darza.darza.dto.authDtos.PropertyUserResponse;
-import com.darza.darza.dto.townDtos.PropertyTownResponse;
+import com.darza.darza.dto.townDtos.DetailedTownResponse;
 import com.darza.darza.enums.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,7 +27,7 @@ public record PropertyDetailsResponse(
         String address,
         BigDecimal latitude,
         BigDecimal longitude,
-        PropertyTownResponse town,
+        DetailedTownResponse town,
         Boolean isAvailable,
         PostingStatus postingStatus,
         String rejectionReason,

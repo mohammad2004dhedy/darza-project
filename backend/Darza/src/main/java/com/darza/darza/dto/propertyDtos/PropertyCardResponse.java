@@ -1,7 +1,7 @@
 package com.darza.darza.dto.propertyDtos;
 
 import com.darza.darza.dto.authDtos.PropertyUserResponse;
-import com.darza.darza.dto.townDtos.PropertyTownResponse;
+import com.darza.darza.dto.townDtos.DetailedTownResponse;
 import com.darza.darza.enums.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,7 +19,7 @@ public record PropertyCardResponse(
     RentPeriod rentPeriod,
     BigDecimal price,
     Currency currency,
-    PropertyTownResponse town,
+    DetailedTownResponse town,
     Boolean isAvailable,
     Instant approvedAt,
     PropertyUserResponse user,

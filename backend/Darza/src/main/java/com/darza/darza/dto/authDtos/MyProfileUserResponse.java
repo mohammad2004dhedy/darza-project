@@ -1,18 +1,18 @@
 package com.darza.darza.dto.authDtos;
 
-import com.darza.darza.dto.propertyDtos.PropertyCardResponse;
-import com.darza.darza.dto.townDtos.TownResponse;
+import com.darza.darza.dto.townDtos.DetailedTownResponse;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.Instant;
-import java.util.List;
 
-public record MyProfileResponse(
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record MyProfileUserResponse(
         Long id,
         String displayName,
         String phoneNumber,
         String email,
         String address,
-        TownResponse town,
+        DetailedTownResponse town,
         String profileImageUrl,
         Instant createdAt
 ) {
