@@ -9,7 +9,7 @@ public class AuthMapper {
     public static User toUser(CreateUserRequest request, Town town, String passwordHash){
         User user = new User();
         user.setDisplayName(request.displayName());
-        user.setEmail(request.email());
+        user.setEmail(request.email().trim().toLowerCase());
         user.setPasswordHash(passwordHash);
         user.setPhoneNumber(request.phoneNumber());
         user.setTown(town);

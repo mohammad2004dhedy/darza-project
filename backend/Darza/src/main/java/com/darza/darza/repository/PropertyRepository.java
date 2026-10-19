@@ -17,12 +17,12 @@ public interface PropertyRepository extends JpaRepository<Property,Long> {
     @EntityGraph(attributePaths = {"town","town.city","createdBy"})
     Slice<Property> findAllByPostingStatusAndIsAvailableTrueOrderByApprovedAtDesc(PostingStatus postingStatus, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"town","town.city"})
+    @EntityGraph(attributePaths = {"town","town.city","createdBy"})
     Slice<Property> findAllByCreatedByIdAndPostingStatusOrderByApprovedAtDesc(Long createdBy,PostingStatus postingStatus, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"town","town.city"})
+    @EntityGraph(attributePaths = {"town","town.city","createdBy"})
     Slice<Property> findAllByCreatedByIdOrderByCreatedAtDesc(Long createdBy,Pageable pageable);
 
     @EntityGraph(attributePaths = {"town","town.city","createdBy"})
-    Slice<Property> findAllByPostingStatusOrderByCreatedAtAsc(PostingStatus postingStatus, Pageable pageable);
+    Slice<Property> findAllByPostingStatusOrderByUpdatedAtAsc(PostingStatus postingStatus, Pageable pageable);
 }
