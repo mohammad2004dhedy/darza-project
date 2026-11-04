@@ -2,6 +2,8 @@ package com.darza.darza.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import jakarta.transaction.TransactionalException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -82,5 +84,18 @@ public class GlobalExceptionHandler {
                 null
         );
         return ResponseEntity.status(status).body(error);
+    }
+    @ExceptionHandler({DataAccessException.class, TransactionalException.class})
+    public ResponseEntity<ApiErrorResponse> handleDataAccessException(RuntimeException ex, HttpServletRequest request){
+        HttpStatus status=HttpStatus.INTERNAL_SERVER_ERROR;
+        ApiErrorResponse error=new ApiErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                "حدث خطأ ما , حاول لاحقا",
+                request.getRequestURI(),
+                null
+        );
+        return  ResponseEntity.status(status).body(error);
     }
 }
