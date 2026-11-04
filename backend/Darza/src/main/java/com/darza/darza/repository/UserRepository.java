@@ -10,6 +10,7 @@ public interface UserRepository extends JpaRepository<User,Long> {
     @EntityGraph(attributePaths={"town","town.city"})
      Optional<User> findByEmail(String email);
      boolean existsByEmail(String email);
+     boolean existsByTownId(Long townId);
 
     @Override
     @EntityGraph(attributePaths = {"town","town.city"})
