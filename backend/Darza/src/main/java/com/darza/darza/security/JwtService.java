@@ -40,12 +40,12 @@ public class JwtService {
                 .getPayload()
                 .getSubject();
     }
-   public Long getTokenExpiration(String token){
+   public Date getTokenExpiration(String token){
        return Jwts.parser()
                .verifyWith(secretKey)
                .build()
                .parseSignedClaims(token)
                .getPayload()
-               .getExpiration().getTime();
+               .getExpiration();
    }
 }
