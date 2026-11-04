@@ -1,10 +1,12 @@
 package com.darza.darza.config;
 
+import com.darza.darza.enums.Role;
 import com.darza.darza.security.JwtAccessDeniedHandler;
 import com.darza.darza.security.JwtAuthFilter;
 import com.darza.darza.security.JwtAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -35,6 +37,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth->
                         auth.requestMatchers("/api/auth/**","/api/public/**").permitAll()
+                                .requestMatchers(HttpMethod.DELETE,"/api/users/me").hasRole(Role.PUBLISHER.name())
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 );

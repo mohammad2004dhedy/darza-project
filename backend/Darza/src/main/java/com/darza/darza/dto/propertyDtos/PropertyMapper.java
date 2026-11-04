@@ -1,12 +1,15 @@
 package com.darza.darza.dto.propertyDtos;
 
 import com.darza.darza.dto.authDtos.AuthMapper;
+import com.darza.darza.dto.imagesDtos.ImageResponse;
 import com.darza.darza.dto.imagesDtos.ImagesMapper;
 import com.darza.darza.dto.townDtos.TownMapper;
 import com.darza.darza.entity.Property;
 import com.darza.darza.entity.Town;
 import com.darza.darza.entity.User;
+import com.darza.darza.enums.PostingStatus;
 
+import java.awt.*;
 import java.util.List;
 
 public class PropertyMapper {
@@ -31,9 +34,34 @@ public class PropertyMapper {
         property.setLongitude(request.longitude());
         return property;
     }
+    public static Property updateProperty(Property property,CreatePropertyRequest request, Town town){
+        property.setTitle(request.title());
+        property.setDescription(request.description());
+        property.setPropertyType(request.propertyType());
+        property.setListingType(request.listingType());
+        property.setPrice(request.price());
+        property.setCurrency(request.currency());
+        property.setRentPeriod(request.rentPeriod());
+        property.setAreaSize(request.areaSize());
+        property.setRooms(request.rooms());
+        property.setBathrooms(request.bathrooms());
+        property.setFurnished(request.furnished());
+        property.setHasBalcony(request.hasBalcony());
+        property.setTown(town);
+        property.setAddress(request.address());
+        property.setLatitude(request.latitude());
+        property.setLongitude(request.longitude());
+        if(property.getPostingStatus()== PostingStatus.APPROVED||property.getPostingStatus()==PostingStatus.REJECTED){
+            property.setPostingStatus(PostingStatus.PENDING);
+            property.setRejectionReason(null);
+            property.setApprovedAt(null);
+            property.setApprovedBy(null);
+        }
+        return property;
+    }
 
     public static PropertyDetailsResponse toPropertyDetailsResponse(Property property, List<String> imagePaths,boolean includeModerationInfo,String bucketUrl){
-        List<String> imageUrls=imagePaths.stream().map(i-> ImagesMapper.toImageUrl(i,bucketUrl)).toList();
+        List<ImageResponse> imageResponses=imagePaths.stream().map(i->new ImageResponse(i, ImagesMapper.toImageUrl(i,bucketUrl))).toList();
         return new PropertyDetailsResponse(
                 property.getId(),
                 property.getTitle(),
@@ -57,7 +85,7 @@ public class PropertyMapper {
                 includeModerationInfo?property.getRejectionReason():null,
                 property.getApprovedAt(),
                 AuthMapper.toPropertyUserResponse(property.getCreatedBy(),bucketUrl,true),
-                imageUrls
+                imageResponses
         );
     }
     public static PropertyCardResponse toPropertyCardResponse(Property property,String coverImagePath,boolean includeModerationInfo,String bucketUrl){

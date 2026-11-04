@@ -51,4 +51,13 @@ public class AuthMapper {
                 includePhone?user.getPhoneNumber():null
         );
     }
+    public static User updateMyProfile(UpdateUserRequest request, User user,Town town){
+        user.setDisplayName(request.displayName());
+        user.setPhoneNumber(request.phoneNumber());
+        user.setTown(town);
+        user.setAddress( request.address() == null || request.address().isBlank()
+                ? null
+                : request.address());
+        return user;
+    }
 }

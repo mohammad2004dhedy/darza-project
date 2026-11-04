@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface TownRepository extends JpaRepository<Town,Long> {
     List<Town> findAllByCityIdOrderByName(Long cityId);
+    boolean existsByCityId(Long cityId);
+    boolean existsByCityIdAndName(Long cityId, String name);
 }

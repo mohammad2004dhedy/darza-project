@@ -1,6 +1,7 @@
 package com.darza.darza.dto.propertyDtos;
 
 import com.darza.darza.dto.authDtos.PropertyUserResponse;
+import com.darza.darza.dto.imagesDtos.ImageResponse;
 import com.darza.darza.dto.townDtos.DetailedTownResponse;
 import com.darza.darza.enums.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,6 +34,6 @@ public record PropertyDetailsResponse(
         String rejectionReason,
         Instant approvedAt,
         PropertyUserResponse user,
-        List<String> imageUrls
+        List<ImageResponse> images
 ) {
 }
