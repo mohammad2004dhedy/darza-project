@@ -52,8 +52,13 @@ public class PropertyQueryService {
             case PRICE_DESC -> Sort.by(Sort.Order.desc("price"),Sort.Order.asc("id"));
         };
     }
+    private void checkNegativity(Long id){
+        if(id==null||id<=0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"معرّف العقار يجب أن يكون رقمًا موجبًا");
+    }
     @Transactional(readOnly = true)
     public PropertyDetailsResponse getPropertyDetails(Long propertyId, UserDetails authentication){
+        checkNegativity(propertyId);
         boolean isAuthenticated=authentication!=null;
         boolean isAdmin=isAuthenticated&&authentication.getAuthorities()
                 .stream().anyMatch(a-> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
@@ -120,6 +125,7 @@ public class PropertyQueryService {
 
     @Transactional(readOnly = true)
     public SliceResponse<PropertyCardResponse> getPublicProfileProperties(Long userId,int page){
+        checkNegativity(userId);
         if(page<0)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"رقم الصفحة غير صالح");
 
