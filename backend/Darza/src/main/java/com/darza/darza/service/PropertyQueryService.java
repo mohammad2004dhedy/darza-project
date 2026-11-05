@@ -54,6 +54,9 @@ public class PropertyQueryService {
     }
     @Transactional(readOnly = true)
     public PropertyDetailsResponse getPropertyDetails(Long propertyId, UserDetails authentication){
+        if(propertyId == null || propertyId <= 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"معرّف العقار يجب أن يكون رقمًا موجبًا");
+        }
         boolean isAuthenticated=authentication!=null;
         boolean isAdmin=isAuthenticated&&authentication.getAuthorities()
                 .stream().anyMatch(a-> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
