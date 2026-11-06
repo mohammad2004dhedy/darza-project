@@ -6,6 +6,7 @@ import com.darza.darza.dto.propertyDtos.PropertyFilterRequest;
 import com.darza.darza.dto.propertyDtos.SliceResponse;
 import com.darza.darza.service.PropertyQueryService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,7 +23,7 @@ public class PropertyQueryController {
 
     @GetMapping("/properties/{id}")
     public ResponseEntity<PropertyDetailsResponse> getPropertyDetails(
-            @PathVariable Long id,
+            @PathVariable @Positive(message = "معرّف العقار يجب أن يكون رقمًا موجبًا") Long id,
             @AuthenticationPrincipal UserDetails authentication
     ){
         PropertyDetailsResponse response=propertyQueryService.getPropertyDetails(id,authentication);
@@ -34,7 +35,7 @@ public class PropertyQueryController {
     }
     @GetMapping("/properties/user/{userId}")
     public ResponseEntity<SliceResponse<PropertyCardResponse>> getPublicProfileProperties(
-            @PathVariable
+            @PathVariable @Positive(message = "معرّف المستخدم يجب أن يكون رقمًا موجبًا")
             Long userId,
             @RequestParam(defaultValue = "0") int page
             ){
