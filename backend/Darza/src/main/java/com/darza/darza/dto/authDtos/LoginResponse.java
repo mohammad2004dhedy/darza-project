@@ -7,6 +7,7 @@ public record LoginResponse(
         String token,
         String displayName,
         String role,
-        Instant expiresAt
+        Instant expiresAt,
+        Long userId
 ) {
 }

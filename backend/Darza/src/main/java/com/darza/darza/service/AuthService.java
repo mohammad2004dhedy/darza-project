@@ -54,7 +54,8 @@ public class AuthService {
                 token,
                 displayName,
                 role,
-                expiration
+                expiration,
+                user.getId()
         );
     }
     public MyProfileUserResponse register(CreateUserRequest request) {
