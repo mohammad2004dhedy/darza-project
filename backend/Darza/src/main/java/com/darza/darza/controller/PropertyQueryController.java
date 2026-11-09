@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api/public/properties")
 public class PropertyQueryController {
     private final PropertyQueryService propertyQueryService;
     public PropertyQueryController(PropertyQueryService propertyQueryService) {
         this.propertyQueryService = propertyQueryService;
     }
 
-    @GetMapping("/properties/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<PropertyDetailsResponse> getPropertyDetails(
             @PathVariable @Positive(message = "معرّف العقار يجب أن يكون رقمًا موجبًا") Long id,
             @AuthenticationPrincipal UserDetails authentication
@@ -29,19 +29,12 @@ public class PropertyQueryController {
         PropertyDetailsResponse response=propertyQueryService.getPropertyDetails(id,authentication);
         return ResponseEntity.ok(response);
     }
-    @GetMapping("/properties/feed")
+    @GetMapping("/feed")
     public ResponseEntity<SliceResponse<PropertyCardResponse>> getFeed(@RequestParam(defaultValue = "0") int page){
         return ResponseEntity.ok(propertyQueryService.getFeed(page));
     }
-    @GetMapping("/properties/user/{userId}")
-    public ResponseEntity<SliceResponse<PropertyCardResponse>> getPublicProfileProperties(
-            @PathVariable @Positive(message = "معرّف المستخدم يجب أن يكون رقمًا موجبًا")
-            Long userId,
-            @RequestParam(defaultValue = "0") int page
-            ){
-        return ResponseEntity.ok(propertyQueryService.getPublicProfileProperties(userId,page));
-    }
-    @GetMapping("/properties/search")
+
+    @GetMapping("/search")
     public ResponseEntity<SliceResponse<PropertyCardResponse>> getFilteredProperties(
             @ModelAttribute @Valid PropertyFilterRequest request
             ){
