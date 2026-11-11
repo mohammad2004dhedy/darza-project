@@ -24,8 +24,6 @@ public class AdminService {
     }
     @Transactional
     public void rejectProperty(Long propertyId, UserDetails authentication, RejectPropertyRequest request) {
-        if (propertyId==null||propertyId<=0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "معرف غير صالح");
         Property property=propertyRepository.findById(propertyId)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "العقار غير موجود او تم حذفه"));
         if(property.getPostingStatus()!=PostingStatus.PENDING)
@@ -37,8 +35,6 @@ public class AdminService {
     }
     @Transactional
     public void approveProperty(Long propertyId,UserDetails authentication){
-        if (propertyId==null||propertyId<=0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "معرف غير صالح");
         Property property=propertyRepository.findById(propertyId)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND, "العقار غير موجود او تم حذفه"));
         User user=userRepository.findByEmail(authentication.getUsername())

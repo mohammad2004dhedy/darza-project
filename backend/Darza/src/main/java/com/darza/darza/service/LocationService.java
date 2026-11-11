@@ -45,8 +45,6 @@ public class LocationService {
         return CityMapper.toCityResponse(city);
     }
     public CityResponse updateCity(CreateCityRequest request,Long cityId) {
-        if(cityId==null||cityId<0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يرجى اختيار معرف صالح");
         City city=cityRepository.findById(cityId)
                 .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"المدينة التي تحاول تعديل اسمها لم تعد موجودة او تم حذفها"));
         if (Objects.equals(request.name(),city.getName()))
@@ -58,8 +56,6 @@ public class LocationService {
         return CityMapper.toCityResponse(city);
     }
     public void deleteCity(Long cityId) {
-        if(cityId==null||cityId<0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يرجى اختيار معرف صالح");
         if (!cityRepository.existsById(cityId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,"المدينة التي تحاول حذفها غير موجودة");
         if(townRepository.existsByCityId(cityId))
@@ -73,8 +69,6 @@ public class LocationService {
                 .toList();
     }
     public TownResponse createTown(CreateTownRequest request) {
-        if (request.cityId() == null||request.cityId()<0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يرجى اختيار مدينة صالحة");
         City city=cityRepository.findById(request.cityId())
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"يرجى اختيار مدينة صالحة"));
         if (townRepository.existsByCityIdAndName(request.cityId(),request.townName()))
@@ -85,8 +79,6 @@ public class LocationService {
         return TownMapper.toTownResponse(savedTown);
     }
     public TownResponse updateTown(CreateTownRequest request,Long townId) {
-        if (request.cityId() == null||request.cityId()<0||townId==null||townId<0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"المعرف غير صالح");
         City city=cityRepository.findById(request.cityId())
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"يرجى اختيار مدينة صالحة"));
         Town town=townRepository.findById(townId)
@@ -101,8 +93,6 @@ public class LocationService {
         return TownMapper.toTownResponse(town);
     }
     public void deleteTown(Long townId) {
-        if(townId==null||townId<0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يرجى اختيار معرف صالح");
         if(!townRepository.existsById(townId))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,"البلدة التي تحاول تعديلها غير موجودة");
         if(propertyRepository.existsByTownId(townId)||userRepository.existsByTownId(townId))
