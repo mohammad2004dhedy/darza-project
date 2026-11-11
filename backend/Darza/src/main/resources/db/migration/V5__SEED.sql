@@ -8,4 +8,3 @@ VALUES ('Temp_User26',
         'street 1 , building 4');
 
 INSERT INTO cities (name) VALUES ('temp_city1');
-ذ
