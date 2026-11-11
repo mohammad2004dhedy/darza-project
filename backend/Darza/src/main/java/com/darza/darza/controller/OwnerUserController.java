@@ -53,6 +53,6 @@ public class OwnerUserController {
             @AuthenticationPrincipal UserDetails authentication
     ){
         userService.deleteMyUserProfileImage(authentication);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

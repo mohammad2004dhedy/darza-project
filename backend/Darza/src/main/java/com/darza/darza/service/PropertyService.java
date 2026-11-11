@@ -56,7 +56,6 @@ public class PropertyService {
         PropertyType type=request.propertyType();
         boolean isLand=type==PropertyType.LAND;
         boolean isRent=request.listingType()==ListingType.RENT;
-        boolean isResidential= type==PropertyType.APARTMENT||type==PropertyType.HOUSE||type==PropertyType.VILLA;
         if(isLand&&request.listingType()== ListingType.RENT){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"الاراضي للبيع فقط");
         }
@@ -64,8 +63,6 @@ public class PropertyService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"فترة الإيجار مطلوبة للإيجار فقط");
         if(isLand&&(request.rooms()!=null||request.bathrooms()!=null||request.furnished()!=null||request.hasBalcony()!=null))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"حقول الغرف والحمامات والاثاث والبرندة لا يمكن ان توجد لعقار من نوع ارض");
-        if(isResidential&&(request.hasBalcony()==null||request.furnished()==null))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يجب تحديد اذا كان العقار يحتوي على برندة او سواء كان مؤثث او لا");
         if((request.latitude()==null)!=(request.longitude()==null))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"يجب ادخال خط الطول والعرض معا");
     }
