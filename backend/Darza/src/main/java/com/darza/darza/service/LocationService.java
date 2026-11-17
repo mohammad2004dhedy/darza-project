@@ -99,8 +99,8 @@ public class LocationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,"البلدة التي تحاول حذفها مستخدمة");
         townRepository.deleteById(townId);
     }
-    public List<TownResponse> getAllTowns() {
-        return townRepository.findAll()
+    public List<TownResponse> getAllTowns(Long cityId) {
+        return townRepository.findAllByCityIdOrderByName(cityId)
                 .stream()
                 .map(TownMapper::toTownResponse)
                 .toList();
