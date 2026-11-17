@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import static com.darza.darza.enums.PostingStatus.*;
+
 @Entity
 @Table(name = "properties")
 public class Property {
@@ -55,7 +57,7 @@ public class Property {
     private Boolean isAvailable=true;
     @Column(name = "posting_status",nullable = false)
     @Enumerated(EnumType.STRING)
-    private PostingStatus postingStatus=PostingStatus.PENDING;
+    private PostingStatus postingStatus= PENDING;
     @Column(name = "rejection_reason",nullable = true)
     private String rejectionReason;
     @Column(name = "approved_at",nullable = true)
@@ -261,4 +263,12 @@ public class Property {
         return updatedAt;
     }
 
+    public void resubmitForReview(){
+        if (postingStatus == APPROVED || postingStatus == REJECTED) {
+            postingStatus = PENDING;
+            rejectionReason = null;
+            approvedAt = null;
+            approvedBy = null;
+        }
+    }
 }

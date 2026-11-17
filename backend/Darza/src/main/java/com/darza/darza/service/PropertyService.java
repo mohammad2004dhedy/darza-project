@@ -7,6 +7,7 @@ import com.darza.darza.entity.Property;
 import com.darza.darza.entity.PropertyImage;
 import com.darza.darza.entity.Town;
 import com.darza.darza.entity.User;
+import com.darza.darza.enums.ImageType;
 import com.darza.darza.enums.ListingType;
 import com.darza.darza.enums.PostingStatus;
 import com.darza.darza.enums.PropertyType;
@@ -14,6 +15,8 @@ import com.darza.darza.repository.PropertyImageRepository;
 import com.darza.darza.repository.PropertyRepository;
 import com.darza.darza.repository.TownRepository;
 import com.darza.darza.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +34,7 @@ import java.util.Set;
 
 @Service
 public class PropertyService {
+    private static final Logger log = LoggerFactory.getLogger(PropertyService.class);
     private final String bucketUrl;
     private final UserRepository userRepository;
     private final TownRepository townRepository;
@@ -89,9 +93,9 @@ public class PropertyService {
         if(new HashSet<>(request.imagePaths()).size()!=request.imagePaths().size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"خطأ في رفع الوسائط");
 
-        String userPrefix="properties/"+user.getId().toString()+"/";
-        if(request.imagePaths().stream().anyMatch((i)->!i.startsWith(userPrefix)))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"غير مسموح لك ترفع صور لشخص غيرك!");
+        if(request.imagePaths().stream().anyMatch(path ->
+                !storageService.isValidImagePath(path, user.getId(), ImageType.PROPERTY)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة غير صالح أو لا ينتمي لك");
 
         propertyImageRepository.saveAll(propertyImages);
         return PropertyMapper.toPropertyDetailsResponse(savedProperty,request.imagePaths(),true,bucketUrl);
@@ -127,7 +131,7 @@ public class PropertyService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                storageService.deleteImages(imagePaths);
+                deleteImagesAfterCommit(imagePaths);
             }
         });
     }
@@ -144,6 +148,7 @@ public class PropertyService {
         validateProperty(request);
 
         Property updatedProperty=PropertyMapper.updateProperty(property,request,town);
+        updatedProperty.resubmitForReview();
         if(authentication.getAuthorities().stream().anyMatch(a-> Objects.equals(a.getAuthority(), "ROLE_ADMIN"))){
             updatedProperty.setPostingStatus(PostingStatus.APPROVED);
             updatedProperty.setApprovedBy(property.getCreatedBy());
@@ -155,7 +160,6 @@ public class PropertyService {
         List<String> existingPaths=propertyImages
                 .stream().map(PropertyImage::getImagePath).toList();
 
-        Set<String> existingPathSet=new HashSet<>(existingPaths);
         Set<String> requestImageSet=new HashSet<>(requestPaths);
         if(requestImageSet.size()!=requestPaths.size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"خطأ في رفع الوسائط");
@@ -165,13 +169,9 @@ public class PropertyService {
                 .filter((path)->!requestImageSet.contains(path))
                 .toList();
 
-        List<String> addedImages=requestImageSet
-                .stream()
-                .filter((path)->!existingPathSet.contains(path))
-                .toList();
-        String userPrefix="properties/"+property.getCreatedBy().getId().toString()+"/";
-        if(addedImages.stream().anyMatch((i)->!i.startsWith(userPrefix)))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"غير مسموح لك ترفع صور لشخص غيرك!");
+        if(requestPaths.stream().anyMatch(path ->
+                !storageService.isValidImagePath(path, property.getCreatedBy().getId(), ImageType.PROPERTY)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة غير صالح أو لا ينتمي لك");
 
         List<PropertyImage> toSaveImages=requestPaths.stream().map((i)->{
             PropertyImage propertyImage=new PropertyImage();
@@ -188,9 +188,17 @@ public class PropertyService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                storageService.deleteImages(removedImages);
+                deleteImagesAfterCommit(removedImages);
             }
         });
         return PropertyMapper.toPropertyDetailsResponse(updatedProperty,requestPaths,true,bucketUrl);
+    }
+
+    private void deleteImagesAfterCommit(List<String> imagePaths) {
+        try {
+            storageService.deleteImages(imagePaths);
+        } catch (Exception e) {
+            log.error("Failed to delete images after property transaction committed: {}", imagePaths, e);
+        }
     }
 }

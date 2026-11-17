@@ -39,7 +39,7 @@ Both fields are required, and `email` must have a valid email format. Use the re
 | Endpoint | Request | Success response |
 | --- | --- | --- |
 | `GET /api/public/location/city/getAll` | No parameters or body | `200 OK` + `CityResponse[]` |
-| `GET /api/public/location/town/getAll` | No parameters or body | `200 OK` + `TownResponse[]` |
+| `GET /api/public/location/town/getAll` | Required positive query `cityId`; example: `?cityId=1` | `200 OK` + `TownResponse[]` for that city, ordered by name |
 
 ## `/api/public/properties`
 
@@ -89,11 +89,11 @@ All endpoints in this section require authentication. The user is identified by 
   "phoneNumber": "0599999999",
   "townId": 1,
   "address": "Optional address",
-  "profileImagePath": "profiles/USER_ID/IMAGE_ID.webp"
+  "profileImagePath": "profiles/1/550e8400-e29b-41d4-a716-446655440000.webp"
 }
 ```
 
-`displayName`, `phoneNumber`, and `townId` are required. `townId` must be positive and identify an existing town. `address` and `profileImagePath` are optional. A new image path must start with `profiles/{currentUserId}/`. Use the separate delete endpoint to remove the profile image.
+`displayName`, `phoneNumber`, and `townId` are required. `townId` must be positive and identify an existing town. `address` and `profileImagePath` are optional. A new image path must match `profiles/{currentUserId}/{lowercase UUID}.webp`. Use the separate delete endpoint to remove the profile image.
 
 ## `/api/property`
 
@@ -126,13 +126,15 @@ All endpoints in this section require authentication. Updating, deleting, and ch
   "address": "Optional address",
   "latitude": 31.500000,
   "longitude": 34.500000,
-  "imagePaths": ["properties/USER_ID/IMAGE_ID.webp"]
+  "imagePaths": ["properties/1/550e8400-e29b-41d4-a716-446655440000.webp"]
 }
 ```
 
-Required fields: `title` (up to 150 characters), `propertyType`, `listingType`, nonnegative `price` (up to two decimal places), `currency`, positive `townId`, and `imagePaths` (1–8 nonblank paths). Image paths must belong to the authenticated user and must be unique. `description` is optional (up to 2,000 characters), and `address` is optional (up to 150 characters). `areaSize`, `rooms`, and `bathrooms` cannot be negative. `latitude` must be between -90 and 90; `longitude` between -180 and 180. Send both coordinates or neither.
+Required fields: `title` (up to 150 characters), `propertyType`, `listingType`, nonnegative `price` (up to two decimal places), `currency`, positive `townId`, and `imagePaths` (1–8 nonblank paths). Every image path must match `properties/{currentUserId}/{lowercase UUID}.webp`, including paths retained during an update. A path can belong to only one property image record; reusing a path for another property violates a database uniqueness constraint. `description` is optional (up to 2,000 characters), and `address` is optional (up to 150 characters). `areaSize`, `rooms`, and `bathrooms` cannot be negative. `latitude` must be between -90 and 90; `longitude` between -180 and 180. Send both coordinates or neither.
 
 `rentPeriod` can be `HOURLY`, `DAILY`, `MONTHLY`, or `YEARLY` and is required only for `RENT`; omit it for `SELL`. `furnished` and `hasBalcony` are optional for non-land properties. `LAND` can only be sold and cannot include rooms, bathrooms, furnishing, or balcony fields.
+
+Updating an approved or rejected property resubmits it as `PENDING` and clears its previous moderation details. An admin updating a property approves it in the same request.
 
 ## `/api/storage`
 
@@ -140,7 +142,7 @@ Required fields: `title` (up to 150 characters), `propertyType`, `listingType`, 
 | --- | --- | --- |
 | `GET /api/storage/upload` | Bearer token and required query parameters `count` (integer >= 1) and `type` (`PROPERTY` or `PROFILE`); example: `?count=1&type=PROFILE` | `200 OK` + `ImageUploadUrlsResponse` |
 
-The service derives the user ID from the authenticated account and creates paths under `properties/{userId}/` or `profiles/{userId}/`. The response contains signed upload URLs and the corresponding paths to use in a property or profile request.
+The service derives the user ID from the authenticated account and creates paths under `properties/{userId}/` or `profiles/{userId}/`. Each filename is a lowercase UUID followed by `.webp`. The response contains signed upload URLs and the corresponding paths to use in a property or profile request.
 
 ## `/api/admin/location`
 
@@ -199,6 +201,9 @@ The following examples show field names and types, not real values. Timestamps u
   "rentPeriod": "HOURLY, DAILY, MONTHLY, YEARLY, or omitted",
   "price": 1000.00,
   "currency": "ILS",
+  "areaSize": 120.50,
+  "rooms": 3,
+  "bathrooms": 2,
   "town": { "townId": 1, "townName": "string", "cityId": 1, "cityName": "string" },
   "isAvailable": true,
   "approvedAt": "ISO-8601, or omitted",
