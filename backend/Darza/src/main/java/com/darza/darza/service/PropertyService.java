@@ -144,6 +144,7 @@ public class PropertyService {
         validateProperty(request);
 
         Property updatedProperty=PropertyMapper.updateProperty(property,request,town);
+        updatedProperty.resubmitForReview();
         if(authentication.getAuthorities().stream().anyMatch(a-> Objects.equals(a.getAuthority(), "ROLE_ADMIN"))){
             updatedProperty.setPostingStatus(PostingStatus.APPROVED);
             updatedProperty.setApprovedBy(property.getCreatedBy());

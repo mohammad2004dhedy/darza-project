@@ -51,12 +51,6 @@ public class PropertyMapper {
         property.setAddress(request.address());
         property.setLatitude(request.latitude());
         property.setLongitude(request.longitude());
-        if(property.getPostingStatus()== PostingStatus.APPROVED||property.getPostingStatus()==PostingStatus.REJECTED){
-            property.setPostingStatus(PostingStatus.PENDING);
-            property.setRejectionReason(null);
-            property.setApprovedAt(null);
-            property.setApprovedBy(null);
-        }
         return property;
     }
 
