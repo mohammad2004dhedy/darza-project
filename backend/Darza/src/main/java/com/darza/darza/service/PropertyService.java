@@ -14,6 +14,8 @@ import com.darza.darza.repository.PropertyImageRepository;
 import com.darza.darza.repository.PropertyRepository;
 import com.darza.darza.repository.TownRepository;
 import com.darza.darza.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +33,7 @@ import java.util.Set;
 
 @Service
 public class PropertyService {
+    private static final Logger log = LoggerFactory.getLogger(PropertyService.class);
     private final String bucketUrl;
     private final UserRepository userRepository;
     private final TownRepository townRepository;
@@ -127,7 +130,7 @@ public class PropertyService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                storageService.deleteImages(imagePaths);
+                deleteImagesAfterCommit(imagePaths);
             }
         });
     }
@@ -189,9 +192,17 @@ public class PropertyService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                storageService.deleteImages(removedImages);
+                deleteImagesAfterCommit(removedImages);
             }
         });
         return PropertyMapper.toPropertyDetailsResponse(updatedProperty,requestPaths,true,bucketUrl);
+    }
+
+    private void deleteImagesAfterCommit(List<String> imagePaths) {
+        try {
+            storageService.deleteImages(imagePaths);
+        } catch (Exception e) {
+            log.error("Failed to delete images after property transaction committed: {}", imagePaths, e);
+        }
     }
 }

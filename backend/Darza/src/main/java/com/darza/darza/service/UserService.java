@@ -7,11 +7,14 @@ import com.darza.darza.dto.authDtos.UpdateUserRequest;
 import com.darza.darza.entity.Property;
 import com.darza.darza.entity.Town;
 import com.darza.darza.entity.User;
+import com.darza.darza.enums.ImageType;
 import com.darza.darza.enums.Role;
 import com.darza.darza.repository.PropertyImageRepository;
 import com.darza.darza.repository.PropertyRepository;
 import com.darza.darza.repository.TownRepository;
 import com.darza.darza.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,6 +30,7 @@ import java.util.Objects;
 
 @Service
 public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
     private final PropertyImageRepository propertyImageRepository;
     private final PropertyRepository  propertyRepository;
@@ -79,7 +83,7 @@ public class UserService {
             @Override
             public void afterCommit() {
                 if(!imagesPaths.isEmpty())
-                 storageService.deleteImages(imagesPaths);
+                    deleteImagesAfterCommit(imagesPaths);
             }
         });
     }
@@ -105,7 +109,7 @@ public class UserService {
             @Override
             public void afterCommit() {
                 if (oldProfileImagePath!=null&&isPathExistAndValid)
-                    storageService.deleteImages(List.of(oldProfileImagePath));
+                    deleteImagesAfterCommit(List.of(oldProfileImagePath));
             }
         });
         return AuthMapper.toMyProfileUserResponse(updatedUser,bucketUrl);
@@ -121,7 +125,7 @@ public class UserService {
             @Override
             public void afterCommit() {
                 if (oldProfileImagePath!=null)
-                    storageService.deleteImages(List.of(oldProfileImagePath));
+                    deleteImagesAfterCommit(List.of(oldProfileImagePath));
             }
         });
     }
@@ -131,6 +135,14 @@ public class UserService {
         User user=userRepository.findById(userId)
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"الحساب الذي طلبته لم يعد موجودا او تم حذفه"));
         return AuthMapper.toPublicUserProfileResponse(user,bucketUrl);
+    }
+
+    private void deleteImagesAfterCommit(List<String> imagePaths) {
+        try {
+            storageService.deleteImages(imagePaths);
+        } catch (Exception e) {
+            log.error("Failed to delete images after user transaction committed: {}", imagePaths, e);
+        }
     }
 
 }
