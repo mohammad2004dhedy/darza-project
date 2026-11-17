@@ -7,6 +7,7 @@ import com.darza.darza.entity.Property;
 import com.darza.darza.entity.PropertyImage;
 import com.darza.darza.entity.Town;
 import com.darza.darza.entity.User;
+import com.darza.darza.enums.ImageType;
 import com.darza.darza.enums.ListingType;
 import com.darza.darza.enums.PostingStatus;
 import com.darza.darza.enums.PropertyType;
@@ -92,9 +93,9 @@ public class PropertyService {
         if(new HashSet<>(request.imagePaths()).size()!=request.imagePaths().size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"خطأ في رفع الوسائط");
 
-        String userPrefix="properties/"+user.getId().toString()+"/";
-        if(request.imagePaths().stream().anyMatch((i)->!i.startsWith(userPrefix)))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"غير مسموح لك ترفع صور لشخص غيرك!");
+        if(request.imagePaths().stream().anyMatch(path ->
+                !storageService.isValidImagePath(path, user.getId(), ImageType.PROPERTY)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة غير صالح أو لا ينتمي لك");
 
         propertyImageRepository.saveAll(propertyImages);
         return PropertyMapper.toPropertyDetailsResponse(savedProperty,request.imagePaths(),true,bucketUrl);
@@ -159,7 +160,6 @@ public class PropertyService {
         List<String> existingPaths=propertyImages
                 .stream().map(PropertyImage::getImagePath).toList();
 
-        Set<String> existingPathSet=new HashSet<>(existingPaths);
         Set<String> requestImageSet=new HashSet<>(requestPaths);
         if(requestImageSet.size()!=requestPaths.size())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"خطأ في رفع الوسائط");
@@ -169,13 +169,9 @@ public class PropertyService {
                 .filter((path)->!requestImageSet.contains(path))
                 .toList();
 
-        List<String> addedImages=requestImageSet
-                .stream()
-                .filter((path)->!existingPathSet.contains(path))
-                .toList();
-        String userPrefix="properties/"+property.getCreatedBy().getId().toString()+"/";
-        if(addedImages.stream().anyMatch((i)->!i.startsWith(userPrefix)))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"غير مسموح لك ترفع صور لشخص غيرك!");
+        if(requestPaths.stream().anyMatch(path ->
+                !storageService.isValidImagePath(path, property.getCreatedBy().getId(), ImageType.PROPERTY)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة غير صالح أو لا ينتمي لك");
 
         List<PropertyImage> toSaveImages=requestPaths.stream().map((i)->{
             PropertyImage propertyImage=new PropertyImage();

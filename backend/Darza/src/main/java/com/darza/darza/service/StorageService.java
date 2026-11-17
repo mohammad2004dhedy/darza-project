@@ -20,10 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class StorageService {
     private static final Logger log = LoggerFactory.getLogger(StorageService.class);
+    private static final Pattern IMAGE_FILE_NAME = Pattern.compile(
+            "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.webp");
     private final String bucketName;
     private final String supabaseUrl;
     private final RestClient restClient;
@@ -65,6 +68,15 @@ public class StorageService {
                 .retrieve()
                 .body(Map.class);
         return supabaseUrl+"/storage/v1"+response.get("url");
+    }
+    public boolean isValidImagePath(String path, Long userId, ImageType type) {
+        if (path == null) return false;
+        String prefix = switch (type) {
+            case PROPERTY -> "properties/" + userId + "/";
+            case PROFILE -> "profiles/" + userId + "/";
+        };
+        return path.startsWith(prefix)
+                && IMAGE_FILE_NAME.matcher(path.substring(prefix.length())).matches();
     }
     public ImageUploadUrlsResponse createUploadUrls(int count, UserDetails authentication, ImageType type){
         if (count<1)

@@ -99,9 +99,8 @@ public class UserService {
         boolean isSamePath=Objects.equals(oldProfileImagePath,request.profileImagePath());
         boolean isPathExistAndValid=request.profileImagePath()!=null&&!request.profileImagePath().isBlank()&&!isSamePath;
         if(isPathExistAndValid){
-            String prefix="profiles/"+user.getId()+"/";
-            if (!request.profileImagePath().startsWith(prefix))
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة المرفق لا ينتمي لك");
+            if (!storageService.isValidImagePath(request.profileImagePath(), user.getId(), ImageType.PROFILE))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"مسار الصورة غير صالح أو لا ينتمي لك");
             updatedUser.setProfileImagePath(request.profileImagePath());
         }
         userRepository.flush();
