@@ -11,7 +11,7 @@ public class PropertyImage {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
-    @Column(name="image_path",nullable = false)
+    @Column(name="image_path",nullable = false, unique = true)
     private String imagePath;
 
     public Long getId() {
