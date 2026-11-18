@@ -18,13 +18,14 @@ Path IDs must be positive integers. Pagination starts at page `0`. Response type
   "displayName": "Example User",
   "email": "user@example.com",
   "password": "password123",
-  "phoneNumber": "0599999999",
+  "phoneNumber": "0591234567",
+  "countryCode": "970",
   "townId": 1,
   "address": "Optional address"
 }
 ```
 
-`displayName` is required (up to 100 characters); `email` is required, valid, and at most 255 characters; `password` is required (8–64 characters); `phoneNumber` is required (up to 20 characters); `townId` is required, positive, and must identify an existing town. `address` is optional (up to 255 characters).
+`displayName` is required (up to 100 characters); `email` is required, valid, and at most 255 characters; `password` is required (8–64 characters); `phoneNumber` must contain 9 digits, or 10 digits with one leading `0` (removed before validation); `countryCode` is required and must be `970` or `972`; `townId` is required, positive, and must identify an existing town. `address` is optional (up to 255 characters). After removing the optional leading `0`, numbers with `972` may start with `50`, `52`, `53`, `54`, `55`, `58`, `56`, or `59`. Numbers with `970` must start with `56` or `59`. The stored and returned phone number starts with `+` followed by the country code and the 9-digit number.
 
 **`LoginRequest`**
 

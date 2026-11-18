@@ -11,7 +11,6 @@ public class AuthMapper {
         user.setDisplayName(request.displayName());
         user.setEmail(request.email().trim().toLowerCase());
         user.setPasswordHash(passwordHash);
-        user.setPhoneNumber(request.phoneNumber());
         user.setTown(town);
         user.setAddress( request.address() == null || request.address().isBlank()
                 ? null
