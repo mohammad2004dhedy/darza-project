@@ -14,13 +14,13 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ref={ref}
           disabled={disabled}
           type={visible ? 'text' : 'password'}
-          className={`pe-14 ${className}`}
+          className={`ps-14 ${className}`}
         />
         <Button
           variant="ghost"
           size="sm"
           disabled={disabled}
-          className="absolute end-1 top-0.5 min-h-10 px-2"
+          className="absolute start-1 top-0.5 min-h-10 px-2"
           aria-label={visible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
           aria-pressed={visible}
           onClick={() => setVisible((value) => !value)}
