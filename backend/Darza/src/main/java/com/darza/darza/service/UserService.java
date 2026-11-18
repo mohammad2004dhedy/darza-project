@@ -24,6 +24,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.darza.darza.util.PhoneNumbers;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -92,9 +94,11 @@ public class UserService {
     public MyProfileUserResponse updateMyUserProfile(UpdateUserRequest request, UserDetails authentication){
         User user=userRepository.findByEmail(authentication.getUsername())
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"حسابك لم يعد موجودا او تم حذفه"));
+        String phoneNumber=PhoneNumbers.normalize(request.countryCode(),request.phoneNumber());
         Town town=townRepository.findById(request.townId())
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"البلدة التي ادخلتها غير موجودة"));
         User updatedUser=AuthMapper.updateMyProfile(request,user,town);
+        updatedUser.setPhoneNumber(phoneNumber);
         String oldProfileImagePath=user.getProfileImagePath();
         boolean isSamePath=Objects.equals(oldProfileImagePath,request.profileImagePath());
         boolean isPathExistAndValid=request.profileImagePath()!=null&&!request.profileImagePath().isBlank()&&!isSamePath;

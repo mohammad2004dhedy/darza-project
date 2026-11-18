@@ -15,13 +15,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.darza.darza.util.PhoneNumbers;
+
 import java.time.Instant;
-import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
-    private static final Pattern ISRAELI_MOBILE = Pattern.compile("(?:50|52|53|54|55|58)[0-9]{7}");
-    private static final Pattern PALESTINIAN_MOBILE = Pattern.compile("(?:56|59)[0-9]{7}");
     AuthenticationManager authenticationManager;
     JwtService jwtService;
     UserRepository userRepository;
@@ -62,7 +61,7 @@ public class AuthService {
         );
     }
     public MyProfileUserResponse register(CreateUserRequest request) {
-        String phoneNumber = formatPhoneNumber(request.countryCode(), request.phoneNumber());
+        String phoneNumber = PhoneNumbers.normalize(request.countryCode(), request.phoneNumber());
         if(userRepository.existsByEmail(request.email().trim().toLowerCase())){
             throw new ResponseStatusException(HttpStatus.CONFLICT,"الايميل مستخدم بالفعل");
         }
@@ -75,17 +74,4 @@ public class AuthService {
         return AuthMapper.toMyProfileUserResponse(savedUser,bucketUrl);
     }
 
-    private String formatPhoneNumber(String countryCode, String phoneNumber) {
-        String localNumber = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
-        boolean valid = switch (countryCode) {
-            case "972" -> ISRAELI_MOBILE.matcher(localNumber).matches()
-                    || PALESTINIAN_MOBILE.matcher(localNumber).matches();
-            case "970" -> PALESTINIAN_MOBILE.matcher(localNumber).matches();
-            default -> false;
-        };
-        if (!valid)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "كود الدولة أو رقم الهاتف غير صالح");
-        return "+" + countryCode + localNumber;
-    }
 }
