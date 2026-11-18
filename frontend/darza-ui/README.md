@@ -1,75 +1,59 @@
-# React + TypeScript + Vite
+# درزة — واجهة المستخدم
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+واجهة عربية باتجاه RTL لمنصة الإعلانات العقارية «درزة». المرحلة الأولى تشمل أساس التطبيق، المكوّنات المشتركة، الجلسة والمسارات فقط؛ جميع الصفحات مؤقتة، ولا توجد نماذج دخول أو قائمة عقارات بعد.
 
-Currently, two official plugins are available:
+## المتطلبات
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js 22.12 أو أحدث ضمن إصدار مدعوم (يُنصح بـ Node.js 24 LTS).
+- npm.
 
-## React Compiler
+## التشغيل المحلي
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+من جذر المستودع:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cd frontend/darza-ui
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+افتح العنوان الذي يطبعه Vite في الطرفية (عادةً http://localhost:5173).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+اضبط عنوان الباكند في ملف `.env`:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```dotenv
+VITE_API_BASE_URL=http://localhost:8080
 ```
+
+العنوان هو جذر الخادم، دون إضافة `/api`. أعد تشغيل Vite بعد تعديل المتغير. لا تضع أسرارًا في متغيرات `VITE_*` لأنها تُضمّن في المتصفح. ملف `.env` مستثنى من Git.
+
+يمكن استعراض الصفحات المؤقتة دون تشغيل الباكند؛ طلبات البيانات تحتاج باكند عاملًا وإعداد CORS يسمح بعنوان الفرونتند. تعليمات وعقد الباكند موجودة في [README الباكند](../../backend/Darza/README.md).
+
+## الفحوصات
+
+```bash
+npm run build && npm run lint && npm test && npm run format:check
+```
+
+- البناء يشمل فحص TypeScript الصارم ثم إخراج ملفات الإنتاج في `dist/`.
+- الاختبارات الحالية تتحقق من أرقام الهاتف وتوحيد صيغتها وروابط الاتصال، ومن عدم إنهاء جلسة جديدة بسبب رد 401 لطلب قديم.
+- لتنسيق الكود باستخدام Prettier: `npm run format`.
+- لمعاينة بناء الإنتاج محليًا: `npm run preview`.
+- عند النشر، يجب توجيه المسارات غير المطابقة لملفات ثابتة إلى `index.html` لدعم React Router.
+
+## تنظيم الكود
+
+- `src/api/`: عميل الطلبات وموارد الباكند.
+- `src/components/ui/`: مكوّنات عامة قابلة لإعادة الاستخدام.
+- `src/components/layout/`: الشعار والتنقل والحاوية والتذييل.
+- `src/context/`: إدارة الجلسة.
+- `src/routes/`: المسارات المحمّلة عند الحاجة وحماية الوصول.
+- `src/pages/`: الصفحات المؤقتة؛ تُنقل إلى ميزاتها عند توسيعها.
+- `src/features/`: محجوز لميزات المراحل القادمة.
+- `src/lib/`: تخزين الجلسة، أخطاء النماذج، وأرقام الهاتف.
+- `src/types/`: أنواع عقد الباكند.
+- `src/index.css`: متغيرات التصميم وربطها بـTailwind والخط المحلي Cairo.
+- `src/assets/darza-logo.webp`: الشعار المحسّن المستخدم في شريط التنقل.
+
+صلاحيات الواجهة لتحسين التجربة فقط؛ الباكند مسؤول عن حماية الوصول الفعلية.
