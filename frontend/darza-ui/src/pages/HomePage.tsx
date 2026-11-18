@@ -1,4 +1,5 @@
-import { Placeholder } from './Placeholder'
+import { PropertyFeed } from '../features/properties/components/PropertyFeed'
+
 export default function HomePage() {
-  return <Placeholder title="الرئيسية" />
+  return <PropertyFeed />
 }
