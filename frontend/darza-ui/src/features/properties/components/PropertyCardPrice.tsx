@@ -1,0 +1,19 @@
+import type { PropertyCardResponse } from '../../../types/api'
+import { formatPrice, getRentPeriodLabel } from '../format'
+
+interface PropertyCardPriceProps {
+  property: PropertyCardResponse
+}
+
+export function PropertyCardPrice({ property }: PropertyCardPriceProps) {
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-1 text-lg font-bold text-primary">
+      <span>{formatPrice(property.price, property.currency)}</span>
+      {property.listingType === 'RENT' && property.rentPeriod && (
+        <span className="text-sm font-normal text-text-muted">
+          {getRentPeriodLabel(property.rentPeriod)}
+        </span>
+      )}
+    </p>
+  )
+}
