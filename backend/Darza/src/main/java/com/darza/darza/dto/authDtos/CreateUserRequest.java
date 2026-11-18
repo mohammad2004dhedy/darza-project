@@ -14,8 +14,11 @@ public record CreateUserRequest(
         @Size(min = 8,max =64, message = "كلمة المرور يجب ان تتكون من 8 احرف على الاقل و64 حرف كحد اقصى")
         String password,
         @NotBlank(message = "يجب ادخال رقم الهاتف")
-        @Size(max = 20)
+        @Pattern(regexp = "0?5\\d{8}", message = "رقم الهاتف غير صالح")
         String phoneNumber,
+        @NotBlank(message = "يجب إدخال كود الدولة")
+        @Pattern(regexp = "970|972", message = "كود الدولة يجب أن يكون 970 أو 972")
+        String countryCode,
         @NotNull(message = "يجب اختيار مكان السكن")
         @Positive(message = "قيمة غير صالحة")
         Long townId,
