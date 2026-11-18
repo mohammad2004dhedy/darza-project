@@ -52,7 +52,6 @@ public class AuthMapper {
     }
     public static User updateMyProfile(UpdateUserRequest request, User user,Town town){
         user.setDisplayName(request.displayName());
-        user.setPhoneNumber(request.phoneNumber());
         user.setTown(town);
         user.setAddress( request.address() == null || request.address().isBlank()
                 ? null

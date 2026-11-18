@@ -88,13 +88,14 @@ All endpoints in this section require authentication. The user is identified by 
 {
   "displayName": "Updated Name",
   "phoneNumber": "0599999999",
+  "countryCode": "970",
   "townId": 1,
   "address": "Optional address",
   "profileImagePath": "profiles/1/550e8400-e29b-41d4-a716-446655440000.webp"
 }
 ```
 
-`displayName`, `phoneNumber`, and `townId` are required. `townId` must be positive and identify an existing town. `address` and `profileImagePath` are optional. A new image path must match `profiles/{currentUserId}/{lowercase UUID}.webp`. Use the separate delete endpoint to remove the profile image.
+`displayName`, `phoneNumber`, `countryCode`, and `townId` are required. `phoneNumber` and `countryCode` follow the same rules as `CreateUserRequest`, and the stored phone number is replaced with the normalized `+{countryCode}{9-digit number}`. `townId` must be positive and identify an existing town. `address` and `profileImagePath` are optional. A new image path must match `profiles/{currentUserId}/{lowercase UUID}.webp`. Use the separate delete endpoint to remove the profile image.
 
 ## `/api/property`
 
