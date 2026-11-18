@@ -1,0 +1,12 @@
+import { House } from 'lucide-react'
+import { EmptyState } from '../../../components/ui/EmptyState'
+
+export function FeedEmptyState() {
+  return (
+    <EmptyState
+      title="ما في عقارات معروضة حاليًا"
+      description="ارجع لاحقًا لتشوف الإعلانات الجديدة."
+      icon={<House />}
+    />
+  )
+}
