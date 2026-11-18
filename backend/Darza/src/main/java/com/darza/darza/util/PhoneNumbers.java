@@ -12,7 +12,6 @@ public final class PhoneNumbers {
     private PhoneNumbers() {
     }
 
-    /** Returns the stored form +{countryCode}{9-digit number}, or throws 400 for an invalid combination. */
     public static String normalize(String countryCode, String phoneNumber) {
         String localNumber = phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber;
         boolean valid = switch (countryCode) {
