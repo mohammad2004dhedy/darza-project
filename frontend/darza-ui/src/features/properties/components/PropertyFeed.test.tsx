@@ -19,6 +19,7 @@ function renderFeed() {
 const property = {
   id: 1,
   title: 'شقة في نابلس',
+  user: { id: 1, displayName: 'ناشر' },
   listingType: 'SELL',
   propertyType: 'APARTMENT',
   price: 150000,

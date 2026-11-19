@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { PropertyCardResponse } from '../../../types/api'
 import { PropertyCard } from './PropertyCard'
@@ -31,11 +31,9 @@ describe('PropertyCard', () => {
   it('renders optional data safely when image, rooms, bathrooms, area, and rent period are absent', () => {
     renderCard(baseProperty)
 
-    expect(
-      screen
-        .getByRole('link', { name: /أرض واسعة قرب المدينة.*25,000.*القدس.*بيت لحم/ })
-        .getAttribute('href'),
-    ).toBe('/properties/42')
+    expect(screen.getByRole('link', { name: baseProperty.title }).getAttribute('href')).toBe(
+      '/properties/42',
+    )
     expect(screen.getByLabelText('لا توجد صورة للعقار')).toBeTruthy()
     expect(screen.getByText('أرض')).toBeTruthy()
     expect(screen.getByText('للبيع')).toBeTruthy()
@@ -91,12 +89,17 @@ describe('PropertyCard', () => {
         <PropertyCard property={{ ...baseProperty, id: 43, title: 'عقار آخر', price: 0 }} />
       </MemoryRouter>,
     )
-    const links = screen.getAllByRole('link')
-    const ids = links.flatMap((link) => (link.getAttribute('aria-labelledby') ?? '').split(' '))
-    expect(ids).toHaveLength(6)
-    expect(new Set(ids).size).toBe(6)
+    const links = [
+      screen.getByRole('link', { name: baseProperty.title }),
+      screen.getByRole('link', { name: 'عقار آخر' }),
+    ]
+    const ids = links.flatMap((link) => (link.getAttribute('aria-describedby') ?? '').split(' '))
+    expect(ids).toHaveLength(4)
+    expect(new Set(ids).size).toBe(4)
     for (const id of ids) expect(document.getElementById(id)).not.toBeNull()
-    expect(screen.getByRole('link', { name: /عقار آخر.*0.*القدس.*بيت لحم/ })).toBeTruthy()
+    expect(
+      screen.getByRole('link', { name: 'عقار آخر' }).getAttribute('aria-describedby'),
+    ).toBeTruthy()
   })
 
   it('shows rent period only for rentals and supports eager cover loading', () => {
@@ -139,6 +142,61 @@ describe('PropertyCard', () => {
     expect(screen.getByRole('img', { name: baseProperty.title }).getAttribute('src')).toContain(
       'other.jpg',
     )
+  })
+
+  it('has two sibling links and opens the publisher independently', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<PropertyCard property={baseProperty} />} />
+          <Route path="/users/:id" element={<p>صفحة الناشر</p>} />
+          <Route path="/properties/:id" element={<p>صفحة العقار</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    const links = screen.getAllByRole('link')
+    expect(links).toHaveLength(2)
+    const title = screen.getByRole('link', { name: baseProperty.title })
+    const publisher = screen.getByRole('link', { name: 'الناشر: ناشر العقار' })
+    expect(title.getAttribute('href')).toBe('/properties/42')
+    expect(publisher.getAttribute('href')).toBe('/users/7')
+    expect(title.contains(publisher)).toBe(false)
+    expect(publisher.contains(title)).toBe(false)
+    fireEvent.click(publisher)
+    expect(screen.getByText('صفحة الناشر')).toBeTruthy()
+    expect(screen.queryByText('صفحة العقار')).toBeNull()
+  })
+
+  it('shows a decorative lazy avatar, fallback and truncated long name', () => {
+    const longName = 'ناشر طويل '.repeat(20)
+    const property = {
+      ...baseProperty,
+      user: {
+        ...baseProperty.user,
+        displayName: longName,
+        profileImageUrl: 'https://example.test/avatar.jpg',
+      },
+    }
+    renderCard(property)
+    const publisher = screen.getByRole('link', { name: /الناشر:/ })
+    const avatar = publisher.querySelector('img')!
+    expect(avatar.getAttribute('alt')).toBe('')
+    expect(avatar.getAttribute('width')).toBe('32')
+    expect(avatar.getAttribute('height')).toBe('32')
+    expect(avatar.getAttribute('loading')).toBe('lazy')
+    expect(avatar.getAttribute('decoding')).toBe('async')
+    expect(publisher.querySelector('.truncate')?.textContent).toBe(longName)
+    fireEvent.error(avatar)
+    expect(publisher.querySelector('img')).toBeNull()
+    expect(publisher.querySelector('[aria-hidden="true"]')).toBeTruthy()
+  })
+
+  it('uses the publisher fallback when the avatar is absent', () => {
+    renderCard(baseProperty)
+    const publisher = screen.getByRole('link', { name: 'الناشر: ناشر العقار' })
+    expect(publisher.querySelector('img')).toBeNull()
+    expect(publisher.querySelector('[aria-hidden="true"]')).toBeTruthy()
+    expect(screen.queryByText('599123456')).toBeNull()
   })
 
   it('does not expose public moderation fields', () => {
