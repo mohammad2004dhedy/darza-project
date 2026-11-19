@@ -3,11 +3,12 @@ import { formatPrice, getRentPeriodLabel } from '../format'
 
 interface PropertyCardPriceProps {
   property: PropertyCardResponse
+  id?: string
 }
 
-export function PropertyCardPrice({ property }: PropertyCardPriceProps) {
+export function PropertyCardPrice({ property, id }: PropertyCardPriceProps) {
   return (
-    <p className="flex flex-wrap items-baseline gap-x-1 text-lg font-bold text-primary">
+    <p id={id} className="flex flex-wrap items-baseline gap-x-1 text-lg font-bold text-primary">
       <span>{formatPrice(property.price, property.currency)}</span>
       {property.listingType === 'RENT' && property.rentPeriod && (
         <span className="text-sm font-normal text-text-muted">
