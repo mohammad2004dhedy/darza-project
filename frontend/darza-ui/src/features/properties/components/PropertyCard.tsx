@@ -6,6 +6,7 @@ import { PropertyCardImage } from './PropertyCardImage'
 import { PropertyCardLocation } from './PropertyCardLocation'
 import { PropertyCardMeta } from './PropertyCardMeta'
 import { PropertyCardPrice } from './PropertyCardPrice'
+import { PropertyCardPublisher } from './PropertyCardPublisher'
 
 export interface PropertyCardProps {
   property: PropertyCardResponse
@@ -15,22 +16,25 @@ export interface PropertyCardProps {
 function PropertyCardView({ property, eager = false }: PropertyCardProps) {
   const id = useId()
   return (
-    <Link
-      to={`/properties/${property.id}`}
-      aria-labelledby={`${id}-title ${id}-price ${id}-location`}
-      className="block overflow-hidden rounded-lg border border-border bg-surface focus-visible:outline-primary"
-    >
+    <article className="relative h-full overflow-hidden rounded-lg border border-border bg-surface">
       <PropertyCardImage title={property.title} imageUrl={property.coverImageUrl} eager={eager} />
-      <article className="space-y-3 p-4">
+      <div className="space-y-3 p-4">
         <PropertyCardBadges property={property} />
-        <h2 id={`${id}-title`} className="line-clamp-2 font-bold text-text">
-          {property.title}
+        <h2 className="line-clamp-2 font-bold text-text">
+          <Link
+            to={`/properties/${property.id}`}
+            aria-describedby={`${id}-price ${id}-location`}
+            className="focus-visible:outline-primary after:absolute after:inset-0"
+          >
+            {property.title}
+          </Link>
         </h2>
         <PropertyCardPrice property={property} id={`${id}-price`} />
         <PropertyCardMeta property={property} />
         <PropertyCardLocation property={property} id={`${id}-location`} />
-      </article>
-    </Link>
+        <PropertyCardPublisher user={property.user} />
+      </div>
+    </article>
   )
 }
 
