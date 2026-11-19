@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ImageOff } from 'lucide-react'
 
 interface PropertyCardImageProps {
@@ -7,7 +8,8 @@ interface PropertyCardImageProps {
 }
 
 export function PropertyCardImage({ title, imageUrl, eager = false }: PropertyCardImageProps) {
-  if (!imageUrl) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  if (!imageUrl || imageUrl === failedUrl) {
     return (
       <div
         role="img"
@@ -22,6 +24,7 @@ export function PropertyCardImage({ title, imageUrl, eager = false }: PropertyCa
   return (
     <img
       src={imageUrl}
+      onError={() => setFailedUrl(imageUrl)}
       alt={title}
       width={640}
       height={480}
