@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { PropertyCardResponse } from '../../../types/api'
@@ -31,9 +31,11 @@ describe('PropertyCard', () => {
   it('renders optional data safely when image, rooms, bathrooms, area, and rent period are absent', () => {
     renderCard(baseProperty)
 
-    expect(screen.getByRole('link', { name: baseProperty.title }).getAttribute('href')).toBe(
-      '/properties/42',
-    )
+    expect(
+      screen
+        .getByRole('link', { name: /أرض واسعة قرب المدينة.*25,000.*القدس.*بيت لحم/ })
+        .getAttribute('href'),
+    ).toBe('/properties/42')
     expect(screen.getByLabelText('لا توجد صورة للعقار')).toBeTruthy()
     expect(screen.getByText('أرض')).toBeTruthy()
     expect(screen.getByText('للبيع')).toBeTruthy()
@@ -67,6 +69,36 @@ describe('PropertyCard', () => {
     expect(screen.queryByText(/غرف|حمامات/)).toBeNull()
   })
 
+  it('shows zero price, area, rooms and bathrooms for a property', () => {
+    renderCard({
+      ...baseProperty,
+      propertyType: 'APARTMENT',
+      price: 0,
+      areaSize: 0,
+      rooms: 0,
+      bathrooms: 0,
+    })
+    expect(screen.getByText('0 ₪')).toBeTruthy()
+    expect(screen.getByText('0 م²')).toBeTruthy()
+    expect(screen.getByText('0 غرف')).toBeTruthy()
+    expect(screen.getByText('0 حمامات')).toBeTruthy()
+  })
+
+  it('assigns unique accessible labels to multiple cards', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={baseProperty} />
+        <PropertyCard property={{ ...baseProperty, id: 43, title: 'عقار آخر', price: 0 }} />
+      </MemoryRouter>,
+    )
+    const links = screen.getAllByRole('link')
+    const ids = links.flatMap((link) => (link.getAttribute('aria-labelledby') ?? '').split(' '))
+    expect(ids).toHaveLength(6)
+    expect(new Set(ids).size).toBe(6)
+    for (const id of ids) expect(document.getElementById(id)).not.toBeNull()
+    expect(screen.getByRole('link', { name: /عقار آخر.*0.*القدس.*بيت لحم/ })).toBeTruthy()
+  })
+
   it('shows rent period only for rentals and supports eager cover loading', () => {
     const property: PropertyCardResponse = {
       ...baseProperty,
@@ -88,6 +120,25 @@ describe('PropertyCard', () => {
     expect(screen.getByRole('img', { name: property.title }).getAttribute('decoding')).toBe('async')
     expect(screen.getByRole('img', { name: property.title }).getAttribute('width')).toBe('640')
     expect(screen.getByRole('img', { name: property.title }).getAttribute('height')).toBe('480')
+  })
+
+  it('shows a placeholder when the image fails and recovers for a new URL', () => {
+    const { rerender } = renderCard({
+      ...baseProperty,
+      coverImageUrl: 'https://example.test/broken.jpg',
+    })
+    fireEvent.error(screen.getByRole('img', { name: baseProperty.title }))
+    expect(screen.getByLabelText('لا توجد صورة للعقار')).toBeTruthy()
+    rerender(
+      <MemoryRouter>
+        <PropertyCard
+          property={{ ...baseProperty, coverImageUrl: 'https://example.test/other.jpg' }}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('img', { name: baseProperty.title }).getAttribute('src')).toContain(
+      'other.jpg',
+    )
   })
 
   it('does not expose public moderation fields', () => {
