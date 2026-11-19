@@ -69,6 +69,36 @@ describe('PropertyCard', () => {
     expect(screen.queryByText(/غرف|حمامات/)).toBeNull()
   })
 
+  it('shows zero price, area, rooms and bathrooms for a property', () => {
+    renderCard({
+      ...baseProperty,
+      propertyType: 'APARTMENT',
+      price: 0,
+      areaSize: 0,
+      rooms: 0,
+      bathrooms: 0,
+    })
+    expect(screen.getByText('0 ₪')).toBeTruthy()
+    expect(screen.getByText('0 م²')).toBeTruthy()
+    expect(screen.getByText('0 غرف')).toBeTruthy()
+    expect(screen.getByText('0 حمامات')).toBeTruthy()
+  })
+
+  it('assigns unique accessible labels to multiple cards', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={baseProperty} />
+        <PropertyCard property={{ ...baseProperty, id: 43, title: 'عقار آخر', price: 0 }} />
+      </MemoryRouter>,
+    )
+    const links = screen.getAllByRole('link')
+    const ids = links.flatMap((link) => (link.getAttribute('aria-labelledby') ?? '').split(' '))
+    expect(ids).toHaveLength(6)
+    expect(new Set(ids).size).toBe(6)
+    for (const id of ids) expect(document.getElementById(id)).not.toBeNull()
+    expect(screen.getByRole('link', { name: /عقار آخر.*0.*القدس.*بيت لحم/ })).toBeTruthy()
+  })
+
   it('shows rent period only for rentals and supports eager cover loading', () => {
     const property: PropertyCardResponse = {
       ...baseProperty,
