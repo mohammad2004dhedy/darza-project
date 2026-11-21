@@ -1,4 +1,5 @@
-import { Placeholder } from './Placeholder'
+import { CreatePropertyForm } from '../features/property-form/components/CreatePropertyForm'
+
 export default function CreatePropertyPage() {
-  return <Placeholder title="إضافة عقار" />
+  return <CreatePropertyForm />
 }
