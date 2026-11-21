@@ -13,7 +13,7 @@ export function Footer() {
         className="flex flex-wrap justify-center gap-4 text-sm text-text-muted"
       >
         {links.map((link) => (
-          <Link key={link.to} to={link.to} className="transition-colors hover:text-primary">
+          <Link key={link.to} to={link.to} className="hover:text-primary">
             {link.label}
           </Link>
         ))}
