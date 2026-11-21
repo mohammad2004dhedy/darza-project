@@ -19,7 +19,7 @@ export default function PropertyDetailsPage() {
   if (isPending) return <DetailsSkeleton />
   if (isError || !property) return <DetailsError onRetry={() => void refetch()} />
   return (
-    <article className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_20rem] lg:pb-0 lg:[direction:ltr]">
+    <article className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_20rem] lg:pb-0 lg:[direction:rtl]">
       <div dir="rtl" className="min-w-0 space-y-6">
         <PropertyGallery key={property.id} images={property.images} title={property.title} />
         <PropertyHeader property={property} />
