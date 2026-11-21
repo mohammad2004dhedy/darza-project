@@ -7,7 +7,9 @@ import { ApiError } from '../../api/client'
 import { useToast } from '../../components/ui/useToast'
 import { useAuth } from '../../context/auth'
 import { resolveSubmitError } from '../../lib/formErrors'
-import { createProperty } from './api'
+import { createProperty, updateProperty } from './api'
+import type { PropertyDetailsResponse } from '../../types/api'
+import { editValues } from './editValues'
 import { invalidatePropertyQueries } from './invalidate'
 import { buildPayload, defaultValues, formSchema, normalizeNumber, type FormValues } from './schema'
 import { useImageUploader } from './useImageUploader'
@@ -24,9 +26,15 @@ export const stepFields: readonly FieldPath<FormValues>[][] = [
 const knownFields = stepFields.flat()
 type NumberField = 'price' | 'areaSize' | 'rooms' | 'bathrooms' | 'latitude' | 'longitude'
 
-export function usePropertyWizard() {
-  const form = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues })
-  const uploader = useImageUploader()
+export function usePropertyWizard(property?: PropertyDetailsResponse) {
+  const initial = useRef(property).current
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: initial ? editValues(initial) : defaultValues,
+  })
+  const uploader = useImageUploader(initial?.images)
+  const initialImages = useRef(initial ? uploader.items.map((item) => item.id).join(',') : '')
+  const [confirming, setConfirming] = useState(false)
   const { userId } = useAuth()
   const { showToast } = useToast()
   const client = useQueryClient()
@@ -68,12 +76,16 @@ export function usePropertyWizard() {
   useEffect(() => {
     setValue(
       'imagePaths',
-      uploader.items.filter((item) => item.kind === 'existing' || item.blob).map((item) => item.id),
-      { shouldValidate: false },
+      uploader.items
+        .filter((item) => item.kind === 'existing' || item.blob)
+        .map((item) => item.path ?? item.id),
+      { shouldValidate: false, shouldDirty: true },
     )
   }, [uploader.items, setValue])
 
-  const unsaved = form.formState.isDirty || uploader.items.length > 0
+  const unsaved =
+    form.formState.isDirty ||
+    uploader.items.map((item) => item.id).join(',') !== initialImages.current
   useEffect(() => {
     if (!unsaved) return
     function preventUnload(event: BeforeUnloadEvent) {
@@ -166,7 +178,8 @@ export function usePropertyWizard() {
     retry: false,
     mutationFn: async (values: FormValues) => {
       const imagePaths = await uploader.uploadAll()
-      return createProperty(buildPayload(values, imagePaths))
+      const payload = buildPayload(values, imagePaths)
+      return initial ? updateProperty(initial.id, payload) : createProperty(payload)
     },
   })
 
@@ -175,9 +188,21 @@ export function usePropertyWizard() {
     if (index >= 0) setStep(index)
   }
 
-  async function onSubmit(event?: FormEvent) {
+  async function onSubmit(event?: FormEvent, confirmed = false) {
     event?.preventDefault()
     if (locked.current) return
+    if (initial && !confirmed) {
+      if (!imagesReady()) {
+        setStep(4)
+        return
+      }
+      if (!(await form.trigger())) {
+        jumpToError(Object.keys(form.formState.errors))
+        return
+      }
+      setConfirming(true)
+      return
+    }
     locked.current = true
     setBusy(true)
     setFormError(null)
@@ -192,11 +217,15 @@ export function usePropertyWizard() {
             const response = await mutation.mutateAsync(values)
             saved.current = true
             form.reset(values)
+            initialImages.current = uploader.items.map((item) => item.id).join(',')
+            setConfirming(false)
             await invalidatePropertyQueries(client, userId)
             showToast(
               response.postingStatus === 'PENDING'
                 ? 'تم إرسال إعلانك للمراجعة وسيظهر للعامة بعد الموافقة'
-                : 'تم نشر إعلانك',
+                : initial
+                  ? 'تم حفظ التعديلات'
+                  : 'تم نشر إعلانك',
             )
             navigate(`/properties/${response.id}`)
           } catch (error) {
@@ -220,6 +249,12 @@ export function usePropertyWizard() {
 
   return {
     form,
+    editMode: Boolean(initial),
+    confirming,
+    confirm: () => onSubmit(undefined, true),
+    cancelConfirmation: () => {
+      if (!locked.current) setConfirming(false)
+    },
     step,
     setStep,
     next,

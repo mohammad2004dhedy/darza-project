@@ -1,5 +1,6 @@
 import { KeyRound, LocateFixed, Tag, X } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { ConfirmModal } from '../../../components/ui/ConfirmModal'
 import { Button } from '../../../components/ui/Button'
 import { FormField } from '../../../components/ui/FormField'
 import { Input } from '../../../components/ui/Input'
@@ -524,7 +525,7 @@ export function PropertyWizard({ wizard }: StepProps) {
   return (
     <form noValidate onSubmit={wizard.onSubmit} className="mx-auto max-w-2xl space-y-6 pb-28">
       <header className="space-y-4">
-        <h1 className="text-2xl font-bold">إضافة إعلان</h1>
+        <h1 className="text-2xl font-bold">{wizard.editMode ? 'تعديل الإعلان' : 'إضافة إعلان'}</h1>
         <p className="text-sm text-text-muted">الخطوة {wizard.step + 1} من 7</p>
         <div className="flex gap-1" aria-hidden="true">
           {stepTitles.map((title, index) => (
@@ -582,10 +583,19 @@ export function PropertyWizard({ wizard }: StepProps) {
             loading={wizard.busy}
             disabled={wizard.uploader.isProcessing}
           >
-            إرسال الإعلان
+            {wizard.editMode ? 'حفظ التعديلات' : 'إرسال الإعلان'}
           </Button>
         )}
       </div>
+      <ConfirmModal
+        open={wizard.confirming}
+        title="حفظ التعديلات"
+        message="قد يعود الإعلان للمراجعة بعد حفظ التعديلات ولن يظهر للعامة حتى الموافقة. هل تريد المتابعة؟"
+        confirmText="حفظ التعديلات"
+        loading={wizard.busy}
+        onConfirm={() => void wizard.confirm()}
+        onCancel={wizard.cancelConfirmation}
+      />
     </form>
   )
 }
