@@ -12,9 +12,10 @@ import { PropertyCardPublisher } from './PropertyCardPublisher'
 export interface PropertyCardProps {
   property: PropertyCardResponse
   eager?: boolean
+  showStatus?: boolean
 }
 
-function PropertyCardView({ property, eager = false }: PropertyCardProps) {
+function PropertyCardView({ property, eager = false, showStatus = false }: PropertyCardProps) {
   const id = useId()
   return (
     <article className="relative h-full overflow-hidden rounded-lg border border-border bg-surface">
@@ -29,6 +30,21 @@ function PropertyCardView({ property, eager = false }: PropertyCardProps) {
           <PropertyTypeBadge propertyType={property.propertyType} />
           <ListingTypeBadge listingType={property.listingType} />
         </div>
+        {showStatus && property.postingStatus === 'PENDING' && (
+          <span className="inline-flex rounded-md bg-warning-soft px-2 py-1 text-sm font-bold text-warning">
+            قيد المراجعة
+          </span>
+        )}
+        {showStatus && property.postingStatus === 'REJECTED' && (
+          <div className="space-y-1">
+            <span className="inline-flex rounded-md bg-danger-soft px-2 py-1 text-sm font-bold text-danger">
+              مرفوض
+            </span>
+            {property.rejectionReason && (
+              <p className="line-clamp-2 text-sm text-danger">{property.rejectionReason}</p>
+            )}
+          </div>
+        )}
         <h2 className="line-clamp-2 font-bold text-text">
           <Link
             to={`/properties/${property.id}`}
