@@ -1,10 +1,11 @@
 import { forwardRef, type HTMLAttributes } from 'react'
 
 export interface SpinnerProps extends HTMLAttributes<HTMLSpanElement> {
+  size?: 'sm' | 'md' | 'lg'
   label?: string
 }
 export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
-  { label = 'جارٍ التحميل', className = '', ...props },
+  { label = 'جاري التحميل', size = 'sm', className = '', ...props },
   ref,
 ) {
   return (
@@ -16,7 +17,7 @@ export const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinne
     >
       <span
         aria-hidden="true"
-        className="size-4 rounded-full border-2 border-current border-e-transparent"
+        className={`shrink-0 animate-spin rounded-full border-2 border-current border-e-transparent motion-reduce:[animation-duration:1.5s] ${{ sm: 'size-4', md: 'size-6', lg: 'size-8' }[size]}`}
       />
       <span className="sr-only">{label}</span>
     </span>

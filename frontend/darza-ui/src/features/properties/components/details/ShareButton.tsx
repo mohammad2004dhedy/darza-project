@@ -14,7 +14,7 @@ export function ShareButton({ property }: { property: PropertyDetailsResponse })
       type="button"
       onClick={share}
       aria-label="مشاركة"
-      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-primary"
+      className="cursor-pointer inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-primary"
     >
       <Share2 className="size-5" aria-hidden="true" />
     </button>

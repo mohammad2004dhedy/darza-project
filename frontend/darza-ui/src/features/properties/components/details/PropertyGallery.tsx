@@ -37,7 +37,7 @@ export function PropertyGallery({ images, title }: Props) {
               type="button"
               onClick={() => setViewerIndex(index)}
               aria-label={`تكبير الصورة ${index + 1}`}
-              className={`relative aspect-4/3 max-h-[36rem] shrink-0 snap-start overflow-hidden lg:aspect-16/9 ${images.length > 1 ? 'w-[92%] md:w-full' : 'w-full'}`}
+              className={`cursor-pointer relative aspect-4/3 max-h-[36rem] shrink-0 snap-start overflow-hidden lg:aspect-16/9 ${images.length > 1 ? 'w-[92%] md:w-full' : 'w-full'}`}
             >
               <img
                 src={image.url}
