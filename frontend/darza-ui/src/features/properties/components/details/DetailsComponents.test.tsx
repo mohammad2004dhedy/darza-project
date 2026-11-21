@@ -152,7 +152,12 @@ it('links publisher with image fallback without exposing a phone', () => {
       <PublisherCard user={{ ...property.user, profileImageUrl: '/avatar.jpg' }} />
     </MemoryRouter>,
   )
-  fireEvent.error(document.querySelector('img')!)
+  const image = document.querySelector('img')!
+  expect(image.getAttribute('width')).toBe('40')
+  expect(image.classList.contains('size-10')).toBe(true)
+  expect(screen.getByRole('link').classList.contains('text-lg')).toBe(true)
+  fireEvent.error(image)
+  expect(screen.getByRole('link').querySelector('.size-10')).toBeTruthy()
   expect(screen.getByRole('link').getAttribute('href')).toBe('/users/9')
   expect(screen.queryByText(property.user.phoneNumber!)).toBeNull()
 })
