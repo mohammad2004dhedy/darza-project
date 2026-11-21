@@ -291,7 +291,7 @@ function ImagesStep({ wizard }: StepProps) {
       >
         <Input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           disabled={uploader.items.length >= 8 || uploader.isUploading}
           onChange={(event) => {

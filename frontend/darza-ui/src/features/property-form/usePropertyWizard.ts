@@ -191,6 +191,10 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   async function onSubmit(event?: FormEvent, confirmed = false) {
     event?.preventDefault()
     if (locked.current) return
+    if (event && step !== 6) {
+      await next()
+      return
+    }
     if (initial && !confirmed) {
       if (!imagesReady()) {
         setStep(4)
