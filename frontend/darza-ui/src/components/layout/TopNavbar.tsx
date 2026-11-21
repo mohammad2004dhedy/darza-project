@@ -8,9 +8,14 @@ export function TopNavbar() {
     <header className="sticky top-0 z-20 flex min-h-20 items-center justify-between gap-4 border-b border-border bg-surface px-4 md:px-6">
       <Logo />
       {isAuthenticated ? (
-        <Button variant="outline" onClick={() => logout()}>
-          تسجيل الخروج
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:block">
+            <ButtonLink to="/properties/new">أضف عقار</ButtonLink>
+          </div>
+          <Button variant="outline" onClick={() => logout()}>
+            تسجيل الخروج
+          </Button>
+        </div>
       ) : (
         <ButtonLink to="/login">تسجيل الدخول</ButtonLink>
       )}
