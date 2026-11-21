@@ -176,34 +176,73 @@ it('retries only unconfirmed images, reuses failed URLs, and retains successes o
   expect(getUploadUrls).toHaveBeenCalledTimes(1)
 })
 
-it('refreshes only a known-expired pairing on retry', async () => {
-  vi.mocked(uploadToSignedUrl).mockRejectedValueOnce(
-    Object.assign(new Error('expired'), { expired: true }),
-  )
+it.each([400, 401, 403, 404, 409, 422, 429, 499])(
+  'refreshes only the rejected image assignment after HTTP %i',
+  async (status) => {
+    vi.mocked(uploadToSignedUrl).mockRejectedValueOnce(
+      Object.assign(new Error('rejected'), { status, expired: status === 401 || status === 403 }),
+    )
+    const { result } = setup()
+    await act(() => result.current.addFiles(files(2)))
+    await act(async () => {
+      await expect(result.current.uploadAll()).rejects.toThrow('رابط ومسار جديدين')
+    })
+    const original = await vi.mocked(getUploadUrls).mock.results[0].value
+    expect(result.current.items[0]).toMatchObject({ status: 'failed' })
+    expect(result.current.items[0].uploadUrl).toBeUndefined()
+    expect(result.current.items[0].path).toBeUndefined()
+    expect(result.current.items[1]).toMatchObject({
+      status: 'done', path: original.imagePaths[1], uploadUrl: original.uploadUrls[1],
+    })
+    let paths!: string[]
+    await act(async () => { paths = await result.current.uploadAll() })
+    const replacement = await vi.mocked(getUploadUrls).mock.results[1].value
+    expect(vi.mocked(getUploadUrls).mock.calls).toEqual([[2], [1]])
+    expect(paths).toEqual([replacement.imagePaths[0], original.imagePaths[1]])
+    expect(vi.mocked(uploadToSignedUrl).mock.calls.map(([url]) => url)).toEqual([
+      ...original.uploadUrls, replacement.uploadUrls[0],
+    ])
+  },
+)
+
+it.each([new Error('network'), new DOMException('timeout', 'TimeoutError'),
+  Object.assign(new Error('server'), { status: 500 }),
+  Object.assign(new Error('unavailable'), { status: 503 }),
+])('retains the same assignment after a transient failure: %s', async (failure) => {
+  vi.mocked(uploadToSignedUrl).mockRejectedValueOnce(failure)
   const { result } = setup()
-  await act(() => result.current.addFiles(files(2)))
-  await act(async () => {
-    await expect(result.current.uploadAll()).rejects.toThrow('expired')
+  await act(() => result.current.addFiles(files(1)))
+  await act(async () => { await expect(result.current.uploadAll()).rejects.toThrow(failure.message) })
+  const original = await vi.mocked(getUploadUrls).mock.results[0].value
+  expect(result.current.items[0]).toMatchObject({
+    status: 'failed', path: original.imagePaths[0], uploadUrl: original.uploadUrls[0],
   })
-  expect(result.current.items[0].uploadUrl).toBeUndefined()
-  expect(result.current.items[1].status).toBe('done')
   await act(() => result.current.uploadAll())
-  expect(vi.mocked(getUploadUrls).mock.calls).toEqual([[2], [1]])
-  expect(uploadToSignedUrl).toHaveBeenCalledTimes(3)
+  expect(getUploadUrls).toHaveBeenCalledTimes(1)
+  expect(vi.mocked(uploadToSignedUrl).mock.calls.map(([url]) => url)).toEqual([
+    original.uploadUrls[0], original.uploadUrls[0],
+  ])
 })
 
-it('never treats an ambiguous already-existing object as confirmed success', async () => {
+it.each([400, 409])('replaces ambiguous HTTP %i assignments without assuming stored-object success', async (status) => {
   vi.mocked(uploadToSignedUrl).mockRejectedValueOnce(
-    Object.assign(new Error('Asset Already Exists'), { ambiguous: true }),
+    Object.assign(new Error('Asset Already Exists'), { status, ambiguous: true }),
   )
   const { result } = setup()
   await act(() => result.current.addFiles(files(1)))
   await act(async () => {
-    await expect(result.current.uploadAll()).rejects.toThrow('لا يمكن تأكيد')
+    await expect(result.current.uploadAll()).rejects.toThrow('رابط ومسار جديدين')
   })
   expect(result.current.items[0].status).toBe('failed')
-  expect(result.current.items[0].uploadUrl).toBeTruthy()
-  expect(result.current.error).toContain('احذفها وأضفها')
+  expect(result.current.items[0].uploadUrl).toBeUndefined()
+  expect(result.current.items[0].path).toBeUndefined()
+  expect(result.current.error).not.toContain('احذفها')
+  const original = await vi.mocked(getUploadUrls).mock.results[0].value
+  await act(() => result.current.uploadAll())
+  const replacement = await vi.mocked(getUploadUrls).mock.results[1].value
+  expect(result.current.items[0]).toMatchObject({ status: 'done', path: replacement.imagePaths[0] })
+  expect(replacement.imagePaths[0]).not.toBe(original.imagePaths[0])
+  expect(vi.mocked(getUploadUrls).mock.calls).toEqual([[1], [1]])
 })
 
 it('excludes removed existing and uploaded new paths without storage deletion', async () => {
@@ -248,12 +287,20 @@ it('blocks add/remove and duplicate submissions while uploading', async () => {
   })
 })
 
-it('rejects malformed URL/path batches before uploading', async () => {
-  vi.mocked(getUploadUrls).mockResolvedValueOnce({ uploadUrls: [], imagePaths: [] })
+it.each([
+  { uploadUrls: [], imagePaths: [] },
+  { uploadUrls: ['https://signed/0', 'https://signed/1'], imagePaths: ['path/0'] },
+  { uploadUrls: ['https://signed/0'], imagePaths: ['path/0', 'path/1'] },
+  { uploadUrls: ['https://signed/0', 'https://signed/1', 'https://signed/2'], imagePaths: ['path/0', 'path/1', 'path/2'] },
+])('rejects mismatched batches atomically: %j', async (response) => {
+  vi.mocked(getUploadUrls).mockResolvedValueOnce(response)
   const { result } = setup()
-  await act(() => result.current.addFiles(files(1)))
+  await act(() => result.current.addFiles(files(2)))
   await act(async () => {
     await expect(result.current.uploadAll()).rejects.toThrow('روابط')
   })
   expect(uploadToSignedUrl).not.toHaveBeenCalled()
+  expect(result.current.items.every((item) => !item.path && !item.uploadUrl)).toBe(true)
+  await act(() => result.current.uploadAll())
+  expect(vi.mocked(getUploadUrls).mock.calls).toEqual([[2], [2]])
 })
