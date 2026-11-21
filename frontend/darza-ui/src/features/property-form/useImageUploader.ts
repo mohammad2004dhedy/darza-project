@@ -144,16 +144,22 @@ export function useImageUploader(existingImages: readonly ImageResponse[] = []) 
             await uploadToSignedUrl(item.uploadUrl!, item.blob!)
             patch(id, { status: 'done' })
           } catch (cause) {
-            const uploadError = cause as { expired?: boolean; ambiguous?: boolean } | null
-            const text = uploadError?.ambiguous
-              ? 'قد تكون الصورة قد رُفعت رغم انقطاع الاتصال، لكن لا يمكن تأكيد نجاحها. احذفها وأضفها مجدداً؛ لن نستبدل الملف الموجود'
+            const uploadError = cause as { status?: number; ambiguous?: boolean } | null
+            const rejected =
+              uploadError?.status !== undefined &&
+              uploadError.status >= 400 &&
+              uploadError.status < 500
+            const text = rejected
+              ? uploadError?.ambiguous
+                ? 'لم يصل تأكيد رفع الصورة. أعد المحاولة للحصول على رابط ومسار جديدين دون استبدال الملف السابق'
+                : 'تعذّر رفع الصورة بهذا الرابط. أعد المحاولة للحصول على رابط ومسار جديدين'
               : message(cause)
             failed = true
             failure = new Error(text)
             patch(id, {
               status: 'failed',
               error: text,
-              ...(uploadError?.expired ? { uploadUrl: undefined, path: undefined } : {}),
+              ...(rejected ? { uploadUrl: undefined, path: undefined } : {}),
             })
           }
         }
