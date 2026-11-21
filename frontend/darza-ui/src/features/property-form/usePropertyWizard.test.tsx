@@ -38,6 +38,21 @@ beforeEach(() => {
   mocks.create.mockResolvedValue({ id: 12, postingStatus: 'PENDING' })
 })
 describe('create wizard', () => {
+  it('treats implicit form submission before review as Next, not publish', async () => {
+    const { result } = setup()
+    await act(async () => {
+      result.current.form.setValue('propertyType', 'HOUSE')
+      result.current.form.setValue('listingType', 'SELL')
+    })
+    const preventDefault = vi.fn()
+    await act(async () => {
+      await result.current.onSubmit({ preventDefault } as never)
+    })
+    expect(preventDefault).toHaveBeenCalledOnce()
+    expect(result.current.step).toBe(1)
+    expect(mocks.upload).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
   it('validates only the current step and Back preserves values', async () => {
     const { result } = setup()
     await act(async () => result.current.next())
