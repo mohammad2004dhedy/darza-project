@@ -28,6 +28,17 @@ function renderCard(property: PropertyCardResponse, eager?: boolean) {
 }
 
 describe('PropertyCard', () => {
+  it('overlays availability on the right and listing on the left, with type in the body', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={{ ...baseProperty, isAvailable: false }} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('غير متاح').parentElement?.className).toContain('right-3')
+    expect(screen.getByText('للبيع').parentElement?.className).toContain('left-3')
+    expect(screen.getByText('أرض').querySelector('svg')).not.toBeNull()
+  })
+
   it('renders optional data safely when image, rooms, bathrooms, area, and rent period are absent', () => {
     renderCard(baseProperty)
 
