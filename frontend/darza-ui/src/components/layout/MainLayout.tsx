@@ -19,7 +19,11 @@ export function MainLayout({ container = 'default' }: MainLayoutProps) {
         انتقل للمحتوى
       </a>
       <TopNavbar />
-      <main id="main-content" tabIndex={-1} className={`flex-1 py-8 ${containers[container]}`}>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={`min-h-[calc(100dvh-5rem)] flex-1 py-8 ${containers[container]}`}
+      >
         <Suspense fallback={<Spinner />}>
           <Outlet />
         </Suspense>
