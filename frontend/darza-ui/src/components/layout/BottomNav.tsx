@@ -13,7 +13,7 @@ function MobileNavItem({ to, label, icon: Icon }: NavItem) {
       to={to}
       end
       className={({ isActive }) =>
-        `flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors ${isActive ? 'bg-background font-bold text-primary' : 'text-text-muted hover:text-primary'}`
+        `flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs ${isActive ? 'bg-background font-bold text-primary' : 'text-text-muted hover:text-primary'}`
       }
     >
       <Icon size={20} aria-hidden="true" />
