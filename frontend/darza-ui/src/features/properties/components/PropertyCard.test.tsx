@@ -226,3 +226,52 @@ it('renders property facts as lightly tinted petrol badges', () => {
     expect(screen.getByText(text).className).toContain('rounded-full')
   }
 })
+
+describe('owner moderation status', () => {
+  it('shows pending status only when requested', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={{ ...baseProperty, postingStatus: 'PENDING' }} showStatus />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('قيد المراجعة')).toBeTruthy()
+    expect(screen.getByText('متاح')).toBeTruthy()
+  })
+
+  it('shows rejected status with a two-line reason', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard
+          property={{
+            ...baseProperty,
+            postingStatus: 'REJECTED',
+            rejectionReason: 'صور غير واضحة',
+          }}
+          showStatus
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('مرفوض')).toBeTruthy()
+    expect(screen.getByText('صور غير واضحة').className).toContain('line-clamp-2')
+  })
+
+  it('does not add a moderation badge for approved properties', () => {
+    render(
+      <MemoryRouter>
+        <PropertyCard property={{ ...baseProperty, postingStatus: 'APPROVED' }} showStatus />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText('مرفوض')).toBeNull()
+    expect(screen.queryByText('قيد المراجعة')).toBeNull()
+  })
+
+  it.each(['PENDING', 'REJECTED'] as const)(
+    'hides %s moderation data by default',
+    (postingStatus) => {
+      renderCard({ ...baseProperty, postingStatus, rejectionReason: 'سبب خاص بالمالك' })
+      expect(screen.queryByText('مرفوض')).toBeNull()
+      expect(screen.queryByText('قيد المراجعة')).toBeNull()
+      expect(screen.queryByText('سبب خاص بالمالك')).toBeNull()
+    },
+  )
+})
