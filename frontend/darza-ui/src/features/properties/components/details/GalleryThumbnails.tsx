@@ -1,4 +1,5 @@
 import type { ImageResponse } from '../../../../types/api'
+import { GalleryImage } from './GalleryImage'
 
 interface Props {
   images: ImageResponse[]
@@ -20,11 +21,10 @@ export function GalleryThumbnails({ images, title, index, onSelect }: Props) {
           aria-current={index === position ? 'true' : undefined}
           className={`cursor-pointer h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline-2 focus-visible:outline-offset-2 ${index === position ? 'border-primary' : 'border-transparent'}`}
         >
-          <img
-            src={image.url}
+          <GalleryImage
+            imageUrl={image.url}
             alt={`${title} — ${position + 1}`}
             loading="lazy"
-            decoding="async"
             className="h-full w-full object-cover"
           />
         </button>
