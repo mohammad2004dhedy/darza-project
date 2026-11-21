@@ -18,7 +18,7 @@ export function GalleryThumbnails({ images, title, index, onSelect }: Props) {
           onClick={() => onSelect(position)}
           aria-label={`عرض الصورة ${position + 1}`}
           aria-current={index === position ? 'true' : undefined}
-          className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline-2 focus-visible:outline-offset-2 ${index === position ? 'border-primary' : 'border-transparent'}`}
+          className={`cursor-pointer h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline-2 focus-visible:outline-offset-2 ${index === position ? 'border-primary' : 'border-transparent'}`}
         >
           <img
             src={image.url}
