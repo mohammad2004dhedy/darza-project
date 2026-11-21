@@ -33,7 +33,7 @@ export class SignedUploadError extends Error {
   constructor(status: number, ambiguous = false, expired = false) {
     super(
       ambiguous
-        ? 'قد تكون الصورة رُفعت دون وصول التأكيد. احذف هذه الصورة وأضفها مجدداً؛ لن نستبدل ملفاً موجوداً'
+        ? 'لم يصل تأكيد رفع الصورة. أعد المحاولة للحصول على رابط ومسار جديدين دون استبدال الملف السابق'
         : 'تعذر رفع الصورة، أعد المحاولة',
     )
     this.status = status
