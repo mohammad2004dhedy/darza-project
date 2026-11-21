@@ -1,3 +1,4 @@
+import { PropertyOwnerActions } from '../features/property-form/components/PropertyOwnerActions'
 import { useParams } from 'react-router'
 import { usePropertyDetails } from '../features/properties/hooks'
 import { PropertyGallery } from '../features/properties/components/details/PropertyGallery'
@@ -24,6 +25,7 @@ export default function PropertyDetailsPage() {
         <PropertyGallery key={property.id} images={property.images} title={property.title} />
         <PropertyHeader property={property} />
         <OwnerStatusNotice property={property} />
+        <PropertyOwnerActions key={property.id} property={property} />
         <PropertyKeyFacts property={property} />
         <PropertyDescription key={property.id} description={property.description} />
         <PropertyLocation property={property} />
