@@ -23,12 +23,12 @@ function PropertyCardView({ property, eager = false }: PropertyCardProps) {
         <div className="pointer-events-none absolute right-3 top-3">
           <AvailabilityBadge isAvailable={property.isAvailable} />
         </div>
-        <div className="pointer-events-none absolute left-3 top-3">
-          <ListingTypeBadge listingType={property.listingType} />
-        </div>
       </div>
       <div className="space-y-3 p-4">
-        <PropertyTypeBadge propertyType={property.propertyType} />
+        <div className="flex flex-wrap items-center gap-2">
+          <PropertyTypeBadge propertyType={property.propertyType} />
+          <ListingTypeBadge listingType={property.listingType} />
+        </div>
         <h2 className="line-clamp-2 font-bold text-text">
           <Link
             to={`/properties/${property.id}`}

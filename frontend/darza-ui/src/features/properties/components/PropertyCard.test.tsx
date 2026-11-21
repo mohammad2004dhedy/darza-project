@@ -28,14 +28,15 @@ function renderCard(property: PropertyCardResponse, eager?: boolean) {
 }
 
 describe('PropertyCard', () => {
-  it('overlays availability on the right and listing on the left, with type in the body', () => {
+  it('overlays availability on the right and groups listing with property type in the body', () => {
     render(
       <MemoryRouter>
         <PropertyCard property={{ ...baseProperty, isAvailable: false }} />
       </MemoryRouter>,
     )
     expect(screen.getByText('غير متاح').parentElement?.className).toContain('right-3')
-    expect(screen.getByText('للبيع').parentElement?.className).toContain('left-3')
+    expect(screen.getByText('للبيع').parentElement).toBe(screen.getByText('أرض').parentElement)
+    expect(screen.getByText('للبيع').parentElement?.className).not.toContain('absolute')
     expect(screen.getByText('أرض').querySelector('svg')).not.toBeNull()
   })
 
@@ -216,4 +217,12 @@ describe('PropertyCard', () => {
     expect(screen.queryByText('APPROVED')).toBeNull()
     expect(screen.queryByText('internal note')).toBeNull()
   })
+})
+
+it('renders property facts as lightly tinted petrol badges', () => {
+  renderCard({ ...baseProperty, propertyType: 'APARTMENT', areaSize: 90, rooms: 2, bathrooms: 1 })
+  for (const text of ['90 م²', '2 غرف', '1 حمامات']) {
+    expect(screen.getByText(text).className).toContain('bg-primary/10')
+    expect(screen.getByText(text).className).toContain('rounded-full')
+  }
 })
