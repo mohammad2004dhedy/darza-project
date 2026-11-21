@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import type { ImageResponse } from '../../../../types/api'
 import { useGallery, usePhotoViewer } from '../../useGallery'
 import { GalleryCounterBadge } from './GalleryCounterBadge'
+import { GalleryImage } from './GalleryImage'
 import { GalleryThumbnails } from './GalleryThumbnails'
 
 interface Props {
@@ -59,12 +60,11 @@ export function PhotoViewer({ images, title, initialIndex, onClose }: Props) {
           >
             {images.map((image, index) => (
               <div key={`${image.path}-${index}`} className="h-full w-full shrink-0 snap-start">
-                <img
-                  src={image.url}
+                <GalleryImage
+                  imageUrl={image.url}
                   alt={`${title} — ${index + 1}`}
                   loading={Math.abs(index - currentIndex) <= 1 ? 'eager' : 'lazy'}
                   fetchPriority={index === currentIndex ? 'high' : 'auto'}
-                  decoding="async"
                   className="h-full w-full object-contain"
                 />
               </div>

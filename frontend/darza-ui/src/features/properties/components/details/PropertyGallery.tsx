@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { ImageResponse } from '../../../../types/api'
 import { useDesktopGallery, useGallery } from '../../useGallery'
 import { GalleryCounterBadge } from './GalleryCounterBadge'
+import { GalleryImage } from './GalleryImage'
 import { GalleryThumbnails } from './GalleryThumbnails'
 import { PhotoViewer } from './PhotoViewer'
 
@@ -39,12 +40,11 @@ export function PropertyGallery({ images, title }: Props) {
               aria-label={`تكبير الصورة ${index + 1}`}
               className={`cursor-pointer relative aspect-4/3 max-h-[36rem] shrink-0 snap-start overflow-hidden lg:aspect-16/9 ${images.length > 1 ? 'w-[92%] md:w-full' : 'w-full'}`}
             >
-              <img
-                src={image.url}
+              <GalleryImage
+                imageUrl={image.url}
                 alt={`${title} — ${index + 1}`}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : undefined}
-                decoding="async"
                 className="h-full w-full object-cover"
               />
             </button>

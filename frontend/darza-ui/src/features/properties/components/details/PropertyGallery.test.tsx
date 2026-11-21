@@ -55,6 +55,35 @@ describe('PropertyGallery', () => {
     expect(screen.getAllByRole('img')[0].getAttribute('fetchpriority')).toBe('high')
   })
 
+  it('shows a fallback for broken gallery images and recovers when the URL changes', () => {
+    const { rerender } = render(<PropertyGallery images={images} title="منزل" />)
+    fireEvent.error(screen.getAllByRole('img')[0])
+    expect(screen.getByRole('img', { name: 'لا توجد صورة للعقار' })).toBeTruthy()
+
+    rerender(
+      <PropertyGallery
+        images={[{ ...images[0], url: '/recovered.jpg' }, ...images.slice(1)]}
+        title="منزل"
+      />,
+    )
+    expect(screen.getByAltText('منزل — 1').getAttribute('src')).toBe('/recovered.jpg')
+  })
+
+  it('shows a fallback for a broken image in the photo viewer', async () => {
+    render(<PropertyGallery images={images} title="منزل" />)
+    const dialog = await openViewer()
+    fireEvent.error(within(dialog).getAllByAltText('منزل — 1')[0])
+    expect(within(dialog).getByRole('img', { name: 'لا توجد صورة للعقار' })).toBeTruthy()
+  })
+
+  it('shows a fallback for a broken desktop thumbnail', () => {
+    desktop = true
+    render(<PropertyGallery images={images} title="منزل" />)
+    const thumbnails = within(screen.getByLabelText('الصور المصغرة'))
+    fireEvent.error(thumbnails.getByAltText('منزل — 1'))
+    expect(thumbnails.getByRole('img', { name: 'لا توجد صورة للعقار' })).toBeTruthy()
+  })
+
   it('respects reduced motion for explicit scroll navigation', () => {
     vi.mocked(window.matchMedia).mockImplementation(
       (query) =>
