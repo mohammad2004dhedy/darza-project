@@ -3,7 +3,7 @@ export function DetailsSkeleton() {
     <div
       role="status"
       aria-label="جارٍ تحميل الإعلان"
-      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:[direction:ltr]"
+      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:[direction:rtl]"
     >
       <div className="space-y-6">
         <div className="aspect-[4/3] rounded-xl bg-border lg:aspect-[16/9] lg:max-h-[36rem]" />
