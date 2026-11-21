@@ -79,6 +79,15 @@ export interface MyProfileUserResponse {
   createdAt: string
 }
 
+export interface PublicUserProfileResponse {
+  id: number
+  displayName: string
+  phoneNumber?: string
+  town?: DetailedTownResponse
+  profileImageUrl?: string
+  createdAt: string
+}
+
 export interface PropertyUserResponse {
   id: number
   displayName: string
