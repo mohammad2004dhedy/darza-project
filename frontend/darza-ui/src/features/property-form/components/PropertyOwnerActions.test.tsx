@@ -42,7 +42,7 @@ const keys = [
   ['users', 7, 'properties'],
 ]
 const clients: QueryClient[] = []
-function setup(overrides: Partial<PropertyDetailsResponse> = {}) {
+function setup(overrides: Partial<PropertyDetailsResponse> = {}, compact = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   clients.push(client)
   keys.forEach((key) => client.setQueryData(key, property))
@@ -50,7 +50,7 @@ function setup(overrides: Partial<PropertyDetailsResponse> = {}) {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <PropertyOwnerActions property={{ ...property, ...overrides }} />
+        <PropertyOwnerActions compact={compact} property={{ ...property, ...overrides }} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -273,4 +273,15 @@ it('shows a fallback error and clears it when reopening the confirmation', async
   fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'إلغاء' }))
   fireEvent.click(screen.getByRole('button', { name: 'حذف الإعلان' }))
   expect(screen.queryByRole('alert')).toBeNull()
+})
+
+it('keeps compact actions on the profile after confirmed deletion', async () => {
+  vi.spyOn(api, 'deleteProperty').mockResolvedValue()
+  setup({}, true)
+  expect(screen.queryByRole('heading', { name: 'إدارة إعلانك' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'حذف الإعلان' }))
+  fireEvent.click(screen.getByRole('button', { name: 'حذف نهائياً' }))
+  await waitFor(() => expect(api.deleteProperty).toHaveBeenCalledWith(23))
+  await waitFor(() => expect(mocks.showToast).toHaveBeenCalled())
+  expect(mocks.navigate).not.toHaveBeenCalled()
 })

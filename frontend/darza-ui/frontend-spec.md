@@ -144,3 +144,10 @@ Inner components: CardImage, CardTags, CardFooter. Whole card navigates to /prop
 ## 11. Explicitly postponed
 Map picker, curved animated bottom bar, Forgot Password, removeProfileImage flag in the API,
 orphan-image cleanup, feed virtualization, breadcrumbs.
+
+## Implementation clarifications
+- Select keeps the native change event (react-hook-form register compatibility).
+- The first card's image is eager (LCP), all others lazy.
+- Login/Register use AuthCard as the auth layout.
+- Kept extras: ShareButton, Google Maps link when coordinates exist, auto-login after register.
+- Feed error state keeps a retry button.

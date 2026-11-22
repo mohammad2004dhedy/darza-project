@@ -90,6 +90,32 @@ export function useImageUploader(existingImages: readonly ImageResponse[] = []) 
     return queue.current
   }
 
+  function reorderImages(activeId: string, overId: string) {
+    if (uploading.current || activeId === overId) return
+    const from = current.current.findIndex((item) => item.id === activeId)
+    const to = current.current.findIndex((item) => item.id === overId)
+    if (from < 0 || to < 0) return
+    const active = current.current[from]
+    const target = current.current[to]
+    if (active.kind === 'existing' || target.kind === 'existing') return
+    const next = [...current.current]
+    next.splice(from, 1)
+    next.splice(to, 0, active)
+    publish(next)
+  }
+
+  function makeCover(id: string) {
+    if (uploading.current || current.current.some((item) => item.kind === 'existing')) return
+    const index = current.current.findIndex((item) => item.id === id)
+    if (index <= 0) return
+    const item = current.current[index]
+    if (item.kind === 'existing' && current.current[0]?.kind === 'existing') return
+    const next = [...current.current]
+    next.splice(index, 1)
+    next.unshift(item)
+    publish(next)
+  }
+
   function removeImage(id: string) {
     if (uploading.current || !mounted.current) return
     const image = current.current.find((item) => item.id === id)
@@ -123,14 +149,16 @@ export function useImageUploader(existingImages: readonly ImageResponse[] = []) 
         ) {
           throw new Error('تعذّر تجهيز روابط رفع الصور. يرجى المحاولة مجدداً')
         }
-        needsUrls.forEach((item, index) =>
-          patch(item.id, {
-            uploadUrl: response.uploadUrls[index],
-            path: response.imagePaths[index],
-            status: 'pending',
-            error: undefined,
-          }),
+        const assignments = new Map(
+          needsUrls.map((item, index) => [
+            item.id,
+            { uploadUrl: response.uploadUrls[index], path: response.imagePaths[index] },
+          ]),
         )
+        for (const item of needsUrls) {
+          const assignment = assignments.get(item.id)!
+          patch(item.id, { ...assignment, status: 'pending', error: undefined })
+        }
       }
       let next = 0
       let failed = false
@@ -193,6 +221,8 @@ export function useImageUploader(existingImages: readonly ImageResponse[] = []) 
     items,
     addFiles,
     removeImage,
+    reorderImages,
+    makeCover,
     uploadAll,
     isProcessing: items.some((item) => item.status === 'processing'),
     isUploading: mutation.isPending,
