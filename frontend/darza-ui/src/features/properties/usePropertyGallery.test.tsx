@@ -1,15 +1,13 @@
 // @vitest-environment jsdom
-import { act, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { usePropertyGallery } from './usePropertyGallery'
 
 beforeEach(() => {
   vi.useFakeTimers()
-  vi.stubGlobal('matchMedia', () => ({ matches: false }))
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(0), 16))
-  vi.stubGlobal('cancelAnimationFrame', clearTimeout)
 })
 afterEach(() => {
+  cleanup()
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
@@ -51,7 +49,7 @@ it('highlights the target immediately and ignores intermediate positions until i
   act(() => {
     element.scrollLeft = 100
     result.current.onScroll()
-    vi.advanceTimersByTime(16)
+    vi.advanceTimersByTime(120)
   })
   expect(result.current.activeIndex).toBe(1)
 })
@@ -59,28 +57,88 @@ it('highlights the target immediately and ignores intermediate positions until i
 it('releases on scrollend and calculates user scrolling with negative RTL offsets', () => {
   const { result, element } = setup(true)
   act(() => result.current.goTo(3))
-  expect(element.scrollTo).toHaveBeenCalledWith({ left: -300, behavior: 'smooth' })
+  expect(element.scrollTo).toHaveBeenCalledWith({ left: -300, behavior: 'auto' })
   act(() => {
     element.scrollLeft = -300
     element.dispatchEvent(new Event('scrollend'))
     element.scrollLeft = -200
     result.current.onScroll()
-    vi.advanceTimersByTime(16)
+    vi.advanceTimersByTime(120)
   })
   expect(result.current.activeIndex).toBe(2)
 })
 
-it('keeps the most recent target during rapid navigation and cancels queued user frames', () => {
+it('keeps the most recent target during rapid navigation and cancels queued user settlement', () => {
   const { result, element } = setup()
   act(() => {
     result.current.onScroll()
     result.current.goTo(1)
     result.current.goTo(3)
-    vi.advanceTimersByTime(16)
+    vi.advanceTimersByTime(120)
   })
   expect(result.current.activeIndex).toBe(3)
   act(() => {
     element.scrollLeft = 300
+    element.dispatchEvent(new Event('scrollend'))
+  })
+  expect(result.current.activeIndex).toBe(3)
+})
+
+it('ignores stale scrollend at the old slide and holds the target until its scrollend', () => {
+  const { result, element } = setup()
+  act(() => result.current.goTo(1))
+  expect(result.current.activeIndex).toBe(1)
+  act(() => {
+    element.dispatchEvent(new Event('scrollend'))
+    result.current.onScroll()
+    vi.advanceTimersByTime(120)
+  })
+  expect(result.current.activeIndex).toBe(1)
+  act(() => {
+    element.scrollLeft = 100
+    element.dispatchEvent(new Event('scrollend'))
+    element.scrollLeft = 200
+    result.current.onScroll()
+    vi.advanceTimersByTime(119)
+  })
+  expect(result.current.activeIndex).toBe(1)
+  act(() => vi.advanceTimersByTime(1))
+  expect(result.current.activeIndex).toBe(2)
+})
+
+it('releases the programmatic lock after 400ms even without scrollend', () => {
+  const { result, element } = setup()
+  act(() => result.current.goTo(2))
+  act(() => {
+    element.scrollLeft = 0
+    result.current.onScroll()
+    vi.advanceTimersByTime(399)
+  })
+  expect(result.current.activeIndex).toBe(2)
+  act(() => {
+    vi.advanceTimersByTime(1)
+    result.current.onScroll()
+    vi.advanceTimersByTime(120)
+  })
+  expect(result.current.activeIndex).toBe(0)
+})
+
+it('updates user scrolling only after the last event settles or scrollend', () => {
+  const { result, element } = setup()
+  act(() => {
+    element.scrollLeft = 100
+    result.current.onScroll()
+    vi.advanceTimersByTime(100)
+    element.scrollLeft = 200
+    result.current.onScroll()
+    vi.advanceTimersByTime(119)
+  })
+  expect(result.current.activeIndex).toBe(0)
+  act(() => vi.advanceTimersByTime(1))
+  expect(result.current.activeIndex).toBe(2)
+  act(() => {
+    element.scrollLeft = 300
+    result.current.onScroll()
     element.dispatchEvent(new Event('scrollend'))
   })
   expect(result.current.activeIndex).toBe(3)
