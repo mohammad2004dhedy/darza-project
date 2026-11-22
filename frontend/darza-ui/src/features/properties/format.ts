@@ -32,6 +32,7 @@ const latinNumberFormatter = new Intl.NumberFormat('en-US', {
 })
 
 export function formatPrice(price: number, currency: Currency): string {
+  if (price === 0) return 'السعر عند التواصل'
   const amount = latinNumberFormatter.format(price)
   const symbol = currencySymbols[currency]
   return currency === 'USD' ? `${symbol}${amount}` : `${amount} ${symbol}`

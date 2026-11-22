@@ -1,4 +1,5 @@
-import { Tag, KeyRound } from 'lucide-react'
+import { Tag } from './Tag'
+import { Tag as TagIcon, KeyRound } from 'lucide-react'
 import { propertyIcons } from '../propertyIcons'
 import type { PropertyCardResponse, PropertyType, ListingType } from '../../../types/api'
 import { getListingTypeLabel, getPropertyTypeLabel } from '../format'
@@ -6,20 +7,20 @@ import { getListingTypeLabel, getPropertyTypeLabel } from '../format'
 export function PropertyTypeBadge({ propertyType }: { propertyType: PropertyType }) {
   const Icon = propertyIcons[propertyType]
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-background px-3 py-1 text-sm font-semibold text-text">
+    <Tag>
       <Icon aria-hidden="true" className="size-4" />
       {getPropertyTypeLabel(propertyType)}
-    </span>
+    </Tag>
   )
 }
 
 export function ListingTypeBadge({ listingType }: { listingType: ListingType }) {
-  const Icon = listingType === 'SELL' ? Tag : KeyRound
+  const Icon = listingType === 'SELL' ? TagIcon : KeyRound
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-sm font-semibold text-on-primary">
+    <Tag>
       <Icon aria-hidden="true" className="size-4" />
       {getListingTypeLabel(listingType)}
-    </span>
+    </Tag>
   )
 }
 

@@ -8,7 +8,11 @@ import { defaultValues } from './schema'
 import { usePropertyWizard } from './usePropertyWizard'
 
 const { navigate, toast } = vi.hoisted(() => ({ navigate: vi.fn(), toast: vi.fn() }))
-vi.mock('react-router', () => ({ useNavigate: () => navigate }))
+import { MemoryRouter } from 'react-router'
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router')>()),
+  useNavigate: () => navigate,
+}))
 vi.mock('../../context/auth', () => ({
   useAuth: () => ({ userId: 7, isAuthenticated: true, isAdmin: false, role: 'PUBLISHER' }),
 }))
@@ -39,7 +43,9 @@ async function setup(count = 2) {
   const invalidate = vi.spyOn(client, 'invalidateQueries')
   const hook = renderHook(() => usePropertyWizard(), {
     wrapper: ({ children }) => (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <MemoryRouter>{children}</MemoryRouter>
+      </QueryClientProvider>
     ),
   })
   await act(async () => {

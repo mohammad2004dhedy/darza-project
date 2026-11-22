@@ -43,3 +43,7 @@ describe('property labels', () => {
     expect(getRentPeriodLabel(value)).toBe(expected)
   })
 })
+
+it.each(['ILS', 'USD', 'JOD'] as const)('shows contact pricing for zero in %s', (currency) => {
+  expect(formatPrice(0, currency)).toBe('السعر عند التواصل')
+})

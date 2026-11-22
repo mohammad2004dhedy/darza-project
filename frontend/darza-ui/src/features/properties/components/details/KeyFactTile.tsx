@@ -9,10 +9,10 @@ export function KeyFactTile({
   label: string
 }) {
   return (
-    <div className="flex aspect-square min-w-0 flex-col items-center justify-center gap-2 rounded-xl bg-primary/10 p-2 text-center">
-      <Icon className="size-6 text-primary" aria-hidden="true" />
-      <span className="text-lg font-bold sm:text-2xl">{value}</span>
-      <span className="text-sm text-text-muted">{label}</span>
+    <div className="grid min-h-20 min-w-0 content-center grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1 rounded-xl bg-primary/10 p-3 text-center">
+      <Icon className="size-5 text-primary" aria-hidden="true" />
+      <span className="order-last col-span-2 whitespace-nowrap text-lg font-bold leading-6">{value}</span>
+      <span className="text-xs text-text-muted">{label}</span>
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { ImageWithPlaceholder } from '../../../../components/ui/ImageWithPlaceholder'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import type { ImageResponse } from '../../../../types/api'
@@ -17,10 +18,10 @@ export function PropertyGallery({ images, title }: Props) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   if (!images.length)
     return (
-      <div
-        className="aspect-4/3 rounded-xl bg-background"
-        role="img"
-        aria-label="لا توجد صورة للعقار"
+      <ImageWithPlaceholder
+        alt={title}
+        containerClassName="aspect-4/3 rounded-xl"
+        placeholderLabel="لا توجد صور للعقار"
       />
     )
   return (
@@ -37,15 +38,15 @@ export function PropertyGallery({ images, title }: Props) {
               type="button"
               onClick={() => setViewerIndex(index)}
               aria-label={`تكبير الصورة ${index + 1}`}
-              className={`cursor-pointer relative aspect-4/3 max-h-[36rem] shrink-0 snap-start overflow-hidden lg:aspect-16/9 ${images.length > 1 ? 'w-[92%] md:w-full' : 'w-full'}`}
+              className={`relative aspect-4/3 max-h-[36rem] shrink-0 snap-start overflow-hidden lg:aspect-16/9 ${images.length > 1 ? 'w-[92%] md:w-full' : 'w-full'}`}
             >
-              <img
+              <ImageWithPlaceholder
                 src={image.url}
                 alt={`${title} — ${index + 1}`}
                 loading={index === 0 ? 'eager' : 'lazy'}
                 fetchPriority={index === 0 ? 'high' : undefined}
                 decoding="async"
-                className="h-full w-full object-cover"
+                containerClassName="h-full w-full"
               />
             </button>
           ))}

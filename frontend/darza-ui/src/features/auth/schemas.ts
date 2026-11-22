@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { COUNTRY_CODES, isValidPhone, phoneFieldsSchema } from '../../lib/phone'
+import { countryCodeSchema, isValidPhone, phoneFieldsSchema } from '../../lib/phone'
 
 const email = z
   .string()
@@ -25,7 +25,7 @@ export const registerSchema = z
       .string()
       .min(8, 'كلمة المرور لازم تكون 8 أحرف على الأقل')
       .max(64, 'كلمة المرور لازم ما تزيد عن 64 حرف'),
-    countryCode: z.enum(COUNTRY_CODES),
+    countryCode: countryCodeSchema,
     phoneNumber: z
       .string()
       .min(1, 'يجب إدخال رقم الهاتف')
@@ -47,4 +47,5 @@ export const registerSchema = z
   })
 
 export type LoginValues = z.infer<typeof loginSchema>
-export type RegisterValues = z.infer<typeof registerSchema>
+export type RegisterValues = z.input<typeof registerSchema>
+export type RegisterSubmission = z.output<typeof registerSchema>

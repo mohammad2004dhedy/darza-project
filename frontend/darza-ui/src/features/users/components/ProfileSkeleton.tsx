@@ -11,20 +11,7 @@ export function ProfileSkeleton({ isMyProfile = false }: { isMyProfile?: boolean
           <Skeleton className="h-5 w-36 max-w-full" />
         </div>
       </div>
-      {isMyProfile ? (
-        <>
-          <div className="space-y-4 rounded-xl border border-border bg-surface p-4 sm:p-6">
-            <Skeleton className="h-7 w-32" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-            </div>
-          </div>
-          <Skeleton className="h-11 w-36" />
-        </>
-      ) : (
-        <Skeleton className="h-11 w-52" />
-      )}
+      {!isMyProfile && <Skeleton className="h-11 w-52" />}
     </div>
   )
 }

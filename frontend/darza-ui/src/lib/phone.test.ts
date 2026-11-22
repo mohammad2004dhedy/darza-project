@@ -19,11 +19,11 @@ function type(text: string, state: PhoneInputState = initialPhoneInput): PhoneIn
 
 describe('applyPhoneInput', () => {
   it.each([
-    ['0599123456', '970', '599123456'],
-    ['0569123456', '970', '569123456'],
+    ['0599123456', '', '599123456'],
+    ['0569123456', '', '569123456'],
     ['0549123456', '972', '549123456'],
     ['0509123456', '972', '509123456'],
-    ['٠٥٩٩١٢٣٤٥٦', '970', '599123456'],
+    ['٠٥٩٩١٢٣٤٥٦', '', '599123456'],
   ])('types %s', (input, countryCode, phoneNumber) => {
     expect(type(input)).toMatchObject({ countryCode, phoneNumber })
   })
@@ -33,7 +33,7 @@ describe('applyPhoneInput', () => {
     ['00970 59-912-3456', '970', '599123456'],
     ['970569123456', '970', '569123456'],
     ['+970509123456', '972', '509123456'],
-    ['0599123456789', '970', '599123456'],
+    ['0599123456789', '', '599123456'],
   ])('pastes %s', (input, countryCode, phoneNumber) => {
     expect(applyPhoneInput(initialPhoneInput, input)).toMatchObject({ countryCode, phoneNumber })
   })
@@ -59,11 +59,12 @@ describe('applyPhoneInput', () => {
     })
   })
 
-  it('returns to 970 after an Israeli prefix is replaced by a Palestinian one', () => {
+  it('requires a choice after an automatic Israeli code, but keeps an explicit choice', () => {
     const israeli = type('054')
+    expect(applyPhoneInput(israeli, '59').countryCode).toBe('')
     const palestinian = applyPhoneInput(selectCountryCode(israeli, '972'), '59')
     expect(palestinian.countryCode).toBe('972')
-    expect(applyPhoneInput(initialPhoneInput, '59').countryCode).toBe('970')
+    expect(applyPhoneInput(initialPhoneInput, '59').countryCode).toBe('')
   })
 
   it('does not allow 970 for Israeli numbers', () => {
@@ -73,6 +74,15 @@ describe('applyPhoneInput', () => {
 })
 
 describe('phoneFieldsSchema', () => {
+  it.each(['569123456', '599123456'])('requires a code for %s', (phoneNumber) => {
+    const result = phoneFieldsSchema.safeParse({ countryCode: '', phoneNumber })
+    expect(result.success).toBe(false)
+    expect(result.error?.issues[0]).toMatchObject({
+      path: ['countryCode'],
+      message: 'اختار كود الدولة +970 أو +972',
+    })
+  })
+
   it.each([
     ['970', '599123456', true],
     ['972', '599123456', true],

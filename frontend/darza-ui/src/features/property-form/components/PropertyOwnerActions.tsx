@@ -7,14 +7,20 @@ import { ButtonLink } from '../../../components/ui/ButtonLink'
 import { ConfirmModal } from '../../../components/ui/ConfirmModal'
 import { useToast } from '../../../components/ui/useToast'
 import { useAuth } from '../../../context/auth'
-import type { PropertyDetailsResponse } from '../../../types/api'
+import type { PropertyCardResponse } from '../../../types/api'
 import { isOwner } from '../../users/isOwner'
 import { deleteProperty, setAvailability } from '../api'
 import { invalidatePropertyQueries } from '../invalidate'
 
 type Action = 'availability' | 'delete'
 
-export function PropertyOwnerActions({ property }: { property: PropertyDetailsResponse }) {
+export function PropertyOwnerActions({
+  property,
+  compact = false,
+}: {
+  property: PropertyCardResponse
+  compact?: boolean
+}) {
   const { userId } = useAuth()
   const client = useQueryClient()
   const navigate = useNavigate()
@@ -47,7 +53,7 @@ export function PropertyOwnerActions({ property }: { property: PropertyDetailsRe
           queryKey: ['properties', 'details', String(property.id)],
           exact: true,
         })
-        navigate('/profile', { replace: true })
+        if (!compact) navigate('/profile', { replace: true })
       }
       await invalidatePropertyQueries(client, userId)
       showToast(action === 'delete' ? 'تم حذف الإعلان' : 'تم تحديث حالة التوفر')
@@ -61,19 +67,35 @@ export function PropertyOwnerActions({ property }: { property: PropertyDetailsRe
   return (
     <section
       aria-label="إدارة الإعلان"
-      className="space-y-3 rounded-lg border border-border bg-surface p-4"
+      className={
+        compact ? 'relative z-10' : 'space-y-3 rounded-lg border border-border bg-surface p-4'
+      }
     >
-      <h2 className="font-bold">إدارة إعلانك</h2>
-      <div className="flex flex-wrap gap-3">
-        <ButtonLink to={`/properties/${property.id}/edit`} variant="outline">
+      {!compact && <h2 className="font-bold">إدارة إعلانك</h2>}
+      <div className={compact ? 'flex flex-wrap gap-2' : 'flex flex-wrap gap-3'}>
+        <ButtonLink
+          to={`/properties/${property.id}/edit`}
+          variant="outline"
+          size={compact ? 'sm' : 'md'}
+        >
           تعديل الإعلان
         </ButtonLink>
         {approved && (
-          <Button variant="outline" disabled={busy} onClick={() => open('availability')}>
+          <Button
+            variant="outline"
+            size={compact ? 'sm' : 'md'}
+            disabled={busy}
+            onClick={() => open('availability')}
+          >
             {availabilityLabel}
           </Button>
         )}
-        <Button variant="danger" disabled={busy} onClick={() => open('delete')}>
+        <Button
+          variant="danger"
+          size={compact ? 'sm' : 'md'}
+          disabled={busy}
+          onClick={() => open('delete')}
+        >
           حذف الإعلان
         </Button>
       </div>

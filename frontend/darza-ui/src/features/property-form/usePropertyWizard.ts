@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm, type FieldPath } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { ApiError } from '../../api/client'
 import { useToast } from '../../components/ui/useToast'
@@ -13,46 +13,40 @@ import { editValues } from './editValues'
 import { invalidatePropertyQueries } from './invalidate'
 import { buildPayload, defaultValues, formSchema, normalizeNumber, type FormValues } from './schema'
 import { useImageUploader } from './useImageUploader'
+import { DraftStorage } from './DraftStorage'
+import { usePropertyDraft } from './usePropertyDraft'
 
-export const stepFields: readonly FieldPath<FormValues>[][] = [
-  ['propertyType', 'listingType'],
-  ['price', 'currency', 'rentPeriod'],
-  ['areaSize', 'rooms', 'bathrooms', 'furnished', 'hasBalcony'],
-  ['cityId', 'townId', 'address', 'latitude', 'longitude'],
-  ['imagePaths'],
-  ['title', 'description'],
-  [],
-]
+import { stepFields, useWizardNavigation } from './useWizardNavigation'
+
 const knownFields = stepFields.flat()
 type NumberField = 'price' | 'areaSize' | 'rooms' | 'bathrooms' | 'latitude' | 'longitude'
 
 export function usePropertyWizard(property?: PropertyDetailsResponse) {
   const initial = useRef(property).current
+  const { userId } = useAuth()
+  const [draft] = useState(() => !initial && userId != null ? DraftStorage.read(userId) : null)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initial ? editValues(initial) : defaultValues,
+    defaultValues: initial ? editValues(initial) : draft ? { ...defaultValues, ...draft.values, imagePaths: [] } : defaultValues,
   })
   const uploader = useImageUploader(initial?.images)
   const initialImages = useRef(initial ? uploader.items.map((item) => item.id).join(',') : '')
   const [confirming, setConfirming] = useState(false)
-  const { userId } = useAuth()
   const { showToast } = useToast()
   const client = useQueryClient()
   const navigate = useNavigate()
-  const [step, setStep] = useState(0)
   const [formError, setFormError] = useState<string | null>(null)
-  const [locationError, setLocationError] = useState<string | null>(null)
-  const [locating, setLocating] = useState(false)
+  const [locationState, setLocationState] = useState<
+    | { status: 'idle' | 'loading' }
+    | { status: 'success'; accuracy?: number }
+    | { status: 'error'; message: string }
+  >({ status: 'idle' })
   const [busy, setBusy] = useState(false)
   const locked = useRef(false)
   const saved = useRef(false)
   const locationRequest = useRef(0)
   const mounted = useRef(true)
   const { setValue, watch } = form
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
-  }, [step])
 
   useEffect(() => {
     mounted.current = true
@@ -113,14 +107,32 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     return true
   }
 
+  const navigation = useWizardNavigation(
+    form,
+    Boolean(initial),
+    !uploader.isProcessing &&
+      uploader.items.length >= 1 &&
+      uploader.items.length <= 8 &&
+      uploader.items.every((item) => item.kind === 'existing' || Boolean(item.blob)),
+    draft?.step,
+  )
+  const { step } = navigation
+  const propertyDraft = usePropertyDraft(form, initial ? null : userId, step, uploader.items.length > 0, draft)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [step])
+  const setStep = navigation.go
+
   async function next() {
     if (locked.current || step >= 6) return
     if (step === 4 && !imagesReady()) return
-    if (await form.trigger(stepFields[step], { shouldFocus: true })) setStep(step + 1)
+    if (await form.trigger(stepFields[step], { shouldFocus: true })) {
+      setStep(navigation.returningToReview ? 6 : step + 1)
+    }
   }
 
   function back() {
-    if (!locked.current) setStep((current) => Math.max(0, current - 1))
+    if (!locked.current) navigation.setStep(Math.max(0, step - 1))
   }
 
   function registerNumber(name: NumberField) {
@@ -135,43 +147,50 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   }
 
   function locate() {
-    setLocationError(null)
+    const request = ++locationRequest.current
+    setLocationState({ status: 'loading' })
     if (!navigator.geolocation) {
-      setLocationError('تحديد الموقع غير متاح في هذا المتصفح')
+      setLocationState({ status: 'error', message: 'المتصفح لا يدعم تحديد الموقع' })
       return
     }
-    const request = ++locationRequest.current
-    setLocating(true)
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         if (!mounted.current || request !== locationRequest.current) return
-        setValue('latitude', String(Number(coords.latitude.toFixed(6))), { shouldDirty: true })
-        setValue('longitude', String(Number(coords.longitude.toFixed(6))), { shouldDirty: true })
+        setValue('latitude', coords.latitude.toFixed(6), { shouldDirty: true })
+        setValue('longitude', coords.longitude.toFixed(6), { shouldDirty: true })
         void form.trigger(['latitude', 'longitude'])
-        setLocating(false)
+        setLocationState({ status: 'success', accuracy: coords.accuracy })
       },
       ({ code }) => {
         if (!mounted.current || request !== locationRequest.current) return
-        setLocating(false)
-        setLocationError(
+        setLocationState({ status: 'error', message:
           code === 1
-            ? 'تم رفض إذن الموقع، يمكنك السماح به من إعدادات المتصفح'
-            : code === 3
-              ? 'انتهت مهلة تحديد الموقع، حاول مرة أخرى'
-              : 'تعذر تحديد موقعك الحالي، حاول مرة أخرى',
-        )
+            ? 'لم يتم السماح بالوصول للموقع، فعّل الإذن من إعدادات المتصفح'
+            : code === 2
+              ? 'تعذّر تحديد الموقع الحالي. حاول مجدداً أو اختر الموقع من الخريطة'
+              : code === 3
+                ? 'انتهت مهلة تحديد الموقع. حاول مجدداً أو اختر الموقع من الخريطة'
+                : 'تعذّر تحديد الموقع. يرجى المحاولة مجدداً',
+        })
       },
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     )
   }
 
   function clearLocation() {
     locationRequest.current++
-    setLocating(false)
-    setLocationError(null)
+    setLocationState({ status: 'idle' })
     setValue('latitude', '', { shouldDirty: true })
     setValue('longitude', '', { shouldDirty: true })
     form.clearErrors(['latitude', 'longitude'])
+  }
+
+  function chooseLocation(latitude: number, longitude: number) {
+    locationRequest.current++
+    setLocationState({ status: 'success' })
+    setValue('latitude', latitude.toFixed(6), { shouldDirty: true })
+    setValue('longitude', longitude.toFixed(6), { shouldDirty: true })
+    void form.trigger(['latitude', 'longitude'])
   }
 
   const mutation = useMutation({
@@ -220,6 +239,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
           try {
             const response = await mutation.mutateAsync(values)
             saved.current = true
+      propertyDraft.clear()
             form.reset(values)
             initialImages.current = uploader.items.map((item) => item.id).join(',')
             setConfirming(false)
@@ -259,8 +279,10 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     cancelConfirmation: () => {
       if (!locked.current) setConfirming(false)
     },
-    step,
-    setStep,
+    ...navigation,
+    setStep: (index: number) => {
+      if (!locked.current) navigation.setStep(index)
+    },
     next,
     back,
     onSubmit,
@@ -271,7 +293,16 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     registerNumber,
     locate,
     clearLocation,
-    locationError,
-    locating,
+    locationState,
+    locationError: locationState.status === 'error' ? locationState.message : null,
+    locating: locationState.status === 'loading',
+    chooseLocation,
+    draftRestored: propertyDraft.restored,
+    draftImagesMissing: propertyDraft.missingImages,
+    restartDraft: () => {
+      propertyDraft.reset()
+      for (const image of uploader.items) uploader.removeImage(image.id)
+      navigation.setStep(0)
+    },
   }
 }

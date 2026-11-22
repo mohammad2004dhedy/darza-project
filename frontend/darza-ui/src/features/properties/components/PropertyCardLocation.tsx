@@ -1,3 +1,4 @@
+import { LocationLine } from './LocationLine'
 import type { PropertyCardResponse } from '../../../types/api'
 
 interface PropertyCardLocationProps {
@@ -7,8 +8,6 @@ interface PropertyCardLocationProps {
 
 export function PropertyCardLocation({ property, id }: PropertyCardLocationProps) {
   return (
-    <p id={id} className="text-sm text-text-muted">
-      {property.town.cityName} - {property.town.townName}
-    </p>
+    <LocationLine id={id} townName={property.town.townName} cityName={property.town.cityName} />
   )
 }

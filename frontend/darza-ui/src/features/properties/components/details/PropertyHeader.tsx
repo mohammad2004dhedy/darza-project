@@ -2,10 +2,12 @@ import type { PropertyDetailsResponse } from '../../../../types/api'
 import { AvailabilityBadge } from '../AvailabilityBadge'
 import { PropertyCardBadges } from '../PropertyCardBadges'
 import { PropertyCardPrice } from '../PropertyCardPrice'
+import { BackButton } from '../../../../components/ui/BackButton'
 import { ShareButton } from './ShareButton'
 export function PropertyHeader({ property }: { property: PropertyDetailsResponse }) {
   return (
     <header className="space-y-4">
+      <BackButton />
       <div className="flex flex-wrap items-center gap-2">
         <AvailabilityBadge isAvailable={property.isAvailable} />
         <PropertyCardBadges property={property} />

@@ -16,8 +16,12 @@ export interface PhoneFieldProps {
 }
 
 export function PhoneField({ error, ...props }: PhoneFieldProps) {
+  const codeError =
+    props.countryCode === '' && /^(56|59)/.test(props.phoneNumber)
+      ? 'اختار كود الدولة +970 أو +972'
+      : undefined
   return (
-    <FormField label="رقم الهاتف" required error={error} hint={<PhoneHint />}>
+    <FormField label="رقم الهاتف" required error={codeError ?? error} hint={<PhoneHint />}>
       <PhoneInputs {...props} />
     </FormField>
   )

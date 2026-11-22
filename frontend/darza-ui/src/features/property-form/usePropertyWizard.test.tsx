@@ -12,7 +12,11 @@ const mocks = vi.hoisted(() => ({
   upload: vi.fn(),
   items: [] as { id: string; kind: 'new'; blob: Blob; status: string }[],
 }))
-vi.mock('react-router', () => ({ useNavigate: () => mocks.navigate }))
+import { MemoryRouter } from 'react-router'
+vi.mock('react-router', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router')>()),
+  useNavigate: () => mocks.navigate,
+}))
 vi.mock('../../context/auth', () => ({ useAuth: () => ({ userId: 7 }) }))
 vi.mock('../../components/ui/useToast', () => ({
   useToast: () => ({ showToast: mocks.showToast }),
@@ -25,7 +29,9 @@ function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return renderHook(() => usePropertyWizard(), {
     wrapper: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <MemoryRouter>{children}</MemoryRouter>
+      </QueryClientProvider>
     ),
   })
 }
@@ -69,7 +75,7 @@ describe('create wizard', () => {
   it('resets scroll without animation when changing steps', () => {
     const { result } = setup()
     vi.mocked(window.scrollTo).mockClear()
-    act(() => result.current.setStep(5))
+    act(() => result.current.editStep(5))
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
   })
   it('forces LAND to SELL synchronously and permits RENT after leaving LAND', () => {
@@ -125,6 +131,36 @@ describe('create wizard', () => {
     expect(result.current.form.getValues('latitude')).toBe('')
     act(() => result.current.locate())
     act(() => get.mock.calls[1][1]({ code: 1 }))
-    expect(result.current.locationError).toContain('رفض')
+    expect(result.current.locationError).toBe('لم يتم السماح بالوصول للموقع، فعّل الإذن من إعدادات المتصفح')
   })
+  it('requests fresh high accuracy only on click, clears errors and ignores stale results', () => {
+    const get = vi.fn()
+    Object.defineProperty(navigator, 'geolocation', { configurable: true, value: { getCurrentPosition: get } })
+    const { result } = setup()
+    expect(get).not.toHaveBeenCalled()
+    expect(result.current.locationState.status).toBe('idle')
+    act(() => result.current.locate())
+    expect(get.mock.calls[0][2]).toEqual({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+    expect(result.current.locationState.status).toBe('loading')
+    act(() => get.mock.calls[0][1]({ code: 2 }))
+    expect(result.current.locationError).toContain('تعذّر تحديد الموقع الحالي')
+    act(() => result.current.locate())
+    expect(result.current.locationError).toBeNull()
+    act(() => get.mock.calls[1][1]({ code: 3 }))
+    expect(result.current.locationError).toContain('انتهت مهلة')
+    act(() => result.current.locate())
+    act(() => get.mock.calls[2][0]({ coords: { latitude: 31.9, longitude: 35.2, accuracy: 1500 } }))
+    expect(result.current.locationState).toEqual({ status: 'success', accuracy: 1500 })
+    expect(result.current.locationError).toBeNull()
+    expect(result.current.form.getValues('latitude')).toBe('31.900000')
+    act(() => result.current.locate())
+    act(() => result.current.chooseLocation(32.12345678, 35.12345678))
+    act(() => get.mock.calls[3][0]({ coords: { latitude: 1, longitude: 2 } }))
+    expect(result.current.form.getValues('latitude')).toBe('32.123457')
+    expect(result.current.form.getValues('longitude')).toBe('35.123457')
+    act(() => result.current.clearLocation())
+    expect(result.current.locationState.status).toBe('idle')
+    expect(result.current.form.getValues('longitude')).toBe('')
+  })
+
 })

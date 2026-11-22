@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+vi.mock('./PropertyMapPreview', () => ({ PropertyMapPreview: () => <div data-testid="map-preview" /> }))
+
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
@@ -88,10 +90,12 @@ function renderContact(value = property, userId: number | null = null) {
 }
 it('keeps valid contact buttons active for unavailable properties', () => {
   renderContact()
-  expect(screen.getByRole('link', { name: 'واتساب' }).getAttribute('href')).toContain(
+  expect(screen.getByRole('link', { name: 'التواصل على واتساب' }).getAttribute('href')).toContain(
     'https://wa.me/970599123456?text=',
   )
-  expect(screen.getByRole('link', { name: 'اتصال' }).getAttribute('href')).toBe('tel:+970599123456')
+  expect(screen.getByRole('link', { name: 'الاتصال بالمعلن' }).getAttribute('href')).toBe(
+    'tel:+970599123456',
+  )
 })
 it.each(['owner', 'missing', 'invalid'])('hides contacts for %s', (kind) => {
   const { container } = renderContact(
@@ -114,29 +118,32 @@ it.each(['owner', 'missing', 'invalid'])('hides contacts for %s', (kind) => {
 it('hides each button independently when its helper returns null', () => {
   vi.spyOn(phone, 'toWhatsAppUrl').mockReturnValue(null)
   renderContact()
-  expect(screen.queryByRole('link', { name: 'واتساب' })).toBeNull()
-  expect(screen.getByRole('link', { name: 'اتصال' })).toBeTruthy()
+  expect(screen.queryByRole('link', { name: 'التواصل على واتساب' })).toBeNull()
+  expect(screen.getByRole('link', { name: 'الاتصال بالمعلن' })).toBeTruthy()
   cleanup()
   vi.restoreAllMocks()
   vi.spyOn(phone, 'toTelUrl').mockReturnValue(null)
   renderContact()
-  expect(screen.queryByRole('link', { name: 'اتصال' })).toBeNull()
-  expect(screen.getByRole('link', { name: 'واتساب' })).toBeTruthy()
+  expect(screen.queryByRole('link', { name: 'الاتصال بالمعلن' })).toBeNull()
+  expect(screen.getByRole('link', { name: 'التواصل على واتساب' })).toBeTruthy()
 })
 it('links zero coordinates to maps and prints the address', () => {
   render(
     <PropertyLocation property={{ ...property, latitude: 0, longitude: 0, address: 'الشارع' }} />,
   )
   expect(screen.getByRole('link').getAttribute('href')).toBe(
-    'https://www.google.com/maps/search/?api=1&query=0,0',
+    'https://www.google.com/maps?q=0,0',
   )
   expect(screen.getByText('الشارع')).toBeTruthy()
+  expect(screen.getByTestId('map-preview')).toBeTruthy()
+  expect(screen.getByRole('link').getAttribute('rel')).toContain('noopener')
 })
 it('shows pending and rejected notices, not approved notices', () => {
   const { rerender } = render(
     <OwnerStatusNotice property={{ ...property, postingStatus: 'PENDING' }} />,
   )
-  expect(screen.getByRole('status').textContent).toContain('قيد المراجعة')
+  expect(screen.getByRole('status').textContent).toContain('الإعلان قيد المراجعة')
+  expect(screen.getByRole('status').textContent).not.toContain('إعلانك')
   rerender(
     <OwnerStatusNotice
       property={{ ...property, postingStatus: 'REJECTED', rejectionReason: 'سبب الرفض' }}
@@ -155,4 +162,24 @@ it('links publisher with image fallback without exposing a phone', () => {
   fireEvent.error(document.querySelector('img')!)
   expect(screen.getByRole('link').getAttribute('href')).toBe('/users/9')
   expect(screen.queryByText(property.user.phoneNumber!)).toBeNull()
+})
+
+it('keeps facts compact with three columns and twenty-pixel icons', () => {
+  const { container } = render(<PropertyKeyFacts property={{ ...property, rooms: 2 }} />)
+  expect(screen.getByRole('region', { name: 'مواصفات العقار' }).className).toContain('grid-cols-3')
+  const tile = screen.getByText('2').parentElement!
+  expect(tile.className).toContain('p-3')
+  expect(tile.className).not.toContain('aspect-square')
+  expect(screen.getByText('2').className).toContain('text-lg')
+  expect(screen.getByText('غرف').className).toContain('text-xs')
+  expect(container.querySelector('svg')?.getAttribute('class')).toContain('size-5')
+})
+
+it('isolates town and city in the shared muted location line', () => {
+  const { container } = render(<PropertyLocation property={property} />)
+  expect([...container.querySelectorAll('bdi')].map((node) => node.textContent)).toEqual([
+    'بيرزيت',
+    'رام الله',
+  ])
+  expect(container.querySelector('bdi')?.closest('p')?.className).toContain('text-text-muted')
 })

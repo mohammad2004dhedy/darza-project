@@ -1,7 +1,6 @@
 import type { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, type ReactNode } from 'react'
 import { Spinner } from '../../../components/ui/Spinner'
-import { Button } from '../../../components/ui/Button'
 import { useInfiniteScroll } from '../../../hooks/useInfiniteScroll'
 import type { PropertyCardResponse, SliceResponse } from '../../../types/api'
 import { FeedEmptyState } from './FeedEmptyState'
@@ -16,7 +15,8 @@ export type PropertyListQuery = UseInfiniteQueryResult<
 
 interface PropertyListProps {
   query: PropertyListQuery
-  showStatus?: boolean
+  renderActions?: (property: PropertyCardResponse) => ReactNode
+  emptyAction?: ReactNode
   emptyTitle?: string
   emptyDescription?: string
 }
@@ -25,9 +25,10 @@ const grid = 'grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3'
 
 export function PropertyList({
   query,
-  showStatus = false,
   emptyTitle,
   emptyDescription,
+  renderActions,
+  emptyAction,
 }: PropertyListProps) {
   const { fetchNextPage } = query
   const loadNext = useCallback(() => void fetchNextPage({ cancelRefetch: false }), [fetchNextPage])
@@ -50,12 +51,19 @@ export function PropertyList({
         <ul className={grid}>
           {properties.map((property, i) => (
             <li key={property.id}>
-              <PropertyCard property={property} eager={i === 0} showStatus={showStatus} />
+              <PropertyCard
+                property={property}
+                eager={i === 0}
+                actions={renderActions?.(property)}
+              />
             </li>
           ))}
         </ul>
       ) : !query.isError && !query.hasNextPage ? (
-        <FeedEmptyState title={emptyTitle} description={emptyDescription} />
+        <div className="space-y-4 text-center">
+          <FeedEmptyState title={emptyTitle} description={emptyDescription} />
+          {emptyAction}
+        </div>
       ) : null}
       {query.isError && (
         <FeedErrorState
@@ -63,16 +71,15 @@ export function PropertyList({
           onRetry={query.isFetchNextPageError ? loadNext : () => void query.refetch()}
         />
       )}
-      {query.hasNextPage && !query.isError && (
-        <div ref={sentinelRef} className="flex min-h-11 justify-center">
-          {query.isFetchingNextPage ? (
-            <Spinner label="جارٍ تحميل المزيد من العقارات" />
-          ) : (
-            <Button variant="outline" disabled={query.isFetching} onClick={loadNext}>
-              تحميل المزيد
-            </Button>
-          )}
-        </div>
+      <div
+        ref={sentinelRef}
+        data-testid="pagination-sentinel"
+        className="flex min-h-11 justify-center"
+      >
+        {query.isFetchingNextPage && <Spinner label="جارٍ تحميل المزيد من العقارات" />}
+      </div>
+      {query.hasNextPage === false && properties.length > 0 && (
+        <p className="text-center text-text-muted">تم مشاهدة جميع العقارات المتاحة</p>
       )}
     </>
   )
