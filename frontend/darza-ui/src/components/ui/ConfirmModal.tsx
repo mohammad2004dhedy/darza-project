@@ -19,6 +19,7 @@ export interface ConfirmModalProps extends Omit<
   cancelText?: string
   tone?: 'default' | 'danger'
   loading?: boolean
+  confirmDisabled?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -31,6 +32,7 @@ export const ConfirmModal = forwardRef<HTMLDialogElement, ConfirmModalProps>(fun
     cancelText = 'إلغاء',
     tone = 'default',
     loading = false,
+    confirmDisabled = false,
     onConfirm,
     onCancel,
     children,
@@ -88,6 +90,7 @@ export const ConfirmModal = forwardRef<HTMLDialogElement, ConfirmModalProps>(fun
         <Button
           variant={tone === 'danger' ? 'danger' : 'primary'}
           loading={loading}
+          disabled={confirmDisabled}
           onClick={onConfirm}
         >
           {confirmText}
