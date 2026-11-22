@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
 import * as api from '../features/properties/api'
@@ -12,9 +12,6 @@ import type { PropertyDetailsResponse } from '../types/api'
 
 const mocks = vi.hoisted(() => ({ auth: { isAdmin: false, userId: null as number | null } }))
 vi.mock('../context/auth', () => ({ useAuth: () => mocks.auth }))
-vi.mock('../features/properties/components/details/PropertyGallery', () => ({
-  PropertyGallery: () => null,
-}))
 const clients: QueryClient[] = []
 const property: PropertyDetailsResponse = {
   id: 7,
@@ -27,7 +24,10 @@ const property: PropertyDetailsResponse = {
   isAvailable: true,
   town: { townId: 1, townName: 'بيرزيت', cityId: 1, cityName: 'رام الله' },
   user: { id: 9, displayName: 'ناشر' },
-  images: [],
+  images: [
+    { path: 'one', url: '/one.webp' },
+    { path: 'two', url: '/two.webp' },
+  ],
 }
 function AdminDestination() {
   const location = useLocation()
@@ -39,15 +39,27 @@ function AdminDestination() {
   )
 }
 
-function renderPage(id = '7') {
+function DetailsNavigation() {
+  const navigate = useNavigate()
+  return (
+    <>
+      <button onClick={() => void navigate('/properties/8')}>Next property</button>
+      <button onClick={() => void navigate(-1)}>Previous property</button>
+      <PropertyDetailsPage />
+    </>
+  )
+}
+
+function renderPage(id = '7', cached: PropertyDetailsResponse[] = []) {
   const client = new QueryClient({ defaultOptions: { queries: { retryDelay: 0 } } })
   clients.push(client)
+  cached.forEach((item) => client.setQueryData(['properties', 'details', String(item.id)], item))
   const view = render(
     <QueryClientProvider client={client}>
       <ToastContext.Provider value={{ showToast: vi.fn() }}>
         <MemoryRouter initialEntries={[`/properties/${id}`]}>
           <Routes>
-            <Route path="/properties/:id" element={<PropertyDetailsPage />} />
+            <Route path="/properties/:id" element={<DetailsNavigation />} />
             <Route path="/admin" element={<AdminDestination />} />
           </Routes>
         </MemoryRouter>
@@ -57,6 +69,14 @@ function renderPage(id = '7') {
   return { client, ...view }
 }
 beforeEach(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  )
   mocks.auth.isAdmin = false
   mocks.auth.userId = null
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -70,6 +90,7 @@ afterEach(() => {
   cleanup()
   clients.splice(0).forEach((client) => client.clear())
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 it('shows the loading skeleton', () => {
   vi.spyOn(api, 'getPropertyDetails').mockReturnValue(new Promise(() => {}))
@@ -152,3 +173,50 @@ it.each(['approve', 'reject'] as const)(
     expect(client.getQueryState(['properties', 'feed'])?.isInvalidated).toBe(true)
   },
 )
+
+it.each([
+  { viewer: 'owner approved', userId: 9, isAdmin: false, status: 'APPROVED', owners: 1 },
+  { viewer: 'owner pending', userId: 9, isAdmin: false, status: 'PENDING', owners: 1 },
+  { viewer: 'owner rejected', userId: 9, isAdmin: false, status: 'REJECTED', owners: 1 },
+  { viewer: 'admin pending', userId: 1, isAdmin: true, status: 'PENDING', owners: 0 },
+  { viewer: 'public', userId: null, isAdmin: false, status: 'APPROVED', owners: 0 },
+] as const)(
+  'renders each section once for $viewer, including cached navigation',
+  async ({ userId, isAdmin, status, owners }) => {
+    mocks.auth.userId = userId
+    mocks.auth.isAdmin = isAdmin
+    const first = {
+      ...property,
+      postingStatus: status,
+      rejectionReason: status === 'REJECTED' ? 'سبب الرفض' : undefined,
+    }
+    const second = { ...first, id: 8, title: 'إعلان آخر' }
+    const errors = vi.spyOn(console, 'error')
+    const { client } = renderPage('7', [first, second])
+    function expectSingleSections() {
+      expect(screen.getAllByRole('region', { name: 'صور العقار' })).toHaveLength(1)
+      expect(screen.queryAllByRole('heading', { name: 'إدارة إعلانك' })).toHaveLength(owners)
+      expect(screen.getAllByRole('heading', { name: 'الناشر' })).toHaveLength(1)
+      expect(screen.getAllByRole('heading', { name: 'الموقع' })).toHaveLength(1)
+    }
+    expectSingleSections()
+    fireEvent.click(screen.getByRole('button', { name: 'Next property' }))
+    await screen.findByRole('heading', { name: 'إعلان آخر' })
+    expectSingleSections()
+    fireEvent.click(screen.getByRole('button', { name: 'Previous property' }))
+    await screen.findByRole('heading', { name: property.title })
+    expectSingleSections()
+    await act(async () => {
+      client.setQueryData(['properties', 'details', '7'], { ...first, title: 'تم تحديث الإعلان' })
+    })
+    expectSingleSections()
+    expect(errors.mock.calls.flat().join(' ')).not.toContain('same key')
+  },
+)
+
+it('highlights the pending notice without changing its copy', () => {
+  renderPage('7', [property])
+  const notice = screen.getByText('الإعلان قيد المراجعة ولن يظهر للعامة حتى تتم الموافقة')
+  expect(notice.classList.contains('bg-warning/20')).toBe(true)
+  expect(notice.classList.contains('text-text')).toBe(true)
+})
