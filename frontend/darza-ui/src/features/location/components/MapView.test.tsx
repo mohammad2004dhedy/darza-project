@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { StrictMode } from 'react'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { MapView } from './MapView'
 
@@ -194,9 +194,12 @@ it('shows an Arabic fallback when initialization fails', async () => {
   })
   render(<MapView interactive />)
   expect((await screen.findByRole('alert')).textContent).toBe(
-    'تعذّر تحميل الخريطة، يرجى المحاولة مرة أخرى',
+    'تعذر تحميل الخريطةإعادة المحاولة',
   )
   expect(screen.queryByRole('status')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'إعادة المحاولة' }))
+  await ready()
+  expect(leaflet.createMap).toHaveBeenCalledTimes(2)
 })
 
 it('requires both finite coordinates before adding a marker', async () => {

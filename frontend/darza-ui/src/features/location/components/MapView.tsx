@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { LeafletMouseEvent, Marker } from 'leaflet'
+import { Button } from '../../../components/ui/Button'
 import { Spinner } from '../../../components/ui/Spinner'
 
 type MapViewProps = {
@@ -13,6 +14,7 @@ export function MapView(props: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const latest = useRef(props)
   const instance = useRef<{ sync: (props: MapViewProps) => void } | null>(null)
+  const [attempt, setAttempt] = useState(0)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useEffect(() => {
@@ -124,6 +126,7 @@ export function MapView(props: MapViewProps) {
           observer = new ResizeObserver(() => map.invalidateSize({ pan: false }))
           observer.observe(container.current)
         }
+        map.invalidateSize({ pan: false })
         setStatus('ready')
       } catch {
         dispose?.()
@@ -139,7 +142,7 @@ export function MapView(props: MapViewProps) {
       instance.current = null
       dispose?.()
     }
-  }, [])
+  }, [attempt])
 
   return (
     <div className="relative isolate h-full overflow-hidden rounded-lg bg-background">
@@ -155,12 +158,10 @@ export function MapView(props: MapViewProps) {
         </div>
       )}
       {status === 'error' && (
-        <p
-          role="alert"
-          className="absolute inset-0 grid place-items-center bg-background p-4 text-center text-danger"
-        >
-          تعذّر تحميل الخريطة، يرجى المحاولة مرة أخرى
-        </p>
+        <div role="alert" className="absolute inset-0 z-[1000] grid place-content-center justify-items-center gap-3 bg-background p-4 text-center">
+          <p className="text-danger">تعذر تحميل الخريطة</p>
+          <Button variant="outline" onClick={() => { setStatus('loading'); setAttempt((value) => value + 1) }}>إعادة المحاولة</Button>
+        </div>
       )}
     </div>
   )
