@@ -1,6 +1,8 @@
 import { BackButton } from '../components/ui/BackButton'
 import { PropertyOwnerActions } from '../features/property-form/components/PropertyOwnerActions'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
+import { useAuth } from '../context/auth'
+import { ModerationBar } from '../features/admin/ModerationBar'
 import { usePropertyDetails } from '../features/properties/hooks'
 import { PropertyGallery } from '../features/properties/components/details/PropertyGallery'
 import { PropertyHeader } from '../features/properties/components/details/PropertyHeader'
@@ -16,6 +18,8 @@ import { DetailsError } from '../features/properties/components/details/DetailsE
 
 export default function PropertyDetailsPage() {
   const { id } = useParams()
+  const { isAdmin } = useAuth()
+  const navigate = useNavigate()
   const { data: property, isPending, notFound, isError, refetch } = usePropertyDetails(id)
   if (notFound) return <DetailsNotFound />
   if (isPending) return <DetailsSkeleton />
@@ -23,6 +27,12 @@ export default function PropertyDetailsPage() {
   return (
     <article className="grid gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_20rem] lg:pb-0 lg:[direction:rtl]">
       <div dir="rtl" className="min-w-0 space-y-6">
+        {isAdmin && property.postingStatus === 'PENDING' && (
+          <ModerationBar
+            propertyId={property.id}
+            onSuccess={() => navigate('/admin?tab=pending')}
+          />
+        )}
         <OwnerStatusNotice property={property} />
         <BackButton />
         <PropertyGallery key={property.id} images={property.images} title={property.title} />

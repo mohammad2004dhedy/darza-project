@@ -1,4 +1,4 @@
-import { Placeholder } from './Placeholder'
+import { AdminModeration } from '../features/admin/AdminModeration'
 export default function AdminPage() {
-  return <Placeholder title="لوحة الإدارة" />
+  return <AdminModeration />
 }
