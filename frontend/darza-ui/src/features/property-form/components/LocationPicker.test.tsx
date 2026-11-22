@@ -31,3 +31,14 @@ it('shows accuracy warning and permits correction and removal', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'استخدام موقعي الحالي' }))
   expect(onLocate).toHaveBeenCalledOnce()
 })
+
+it('unmounts on cancel and mounts again only inside an open dialog', async () => {
+  render(<LocationPicker state={{ status: 'idle' }} onChange={vi.fn()} onLocate={vi.fn()} onClear={vi.fn()} />)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    expect(screen.queryByRole('button', { name: 'اختر نقطة تجريبية' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'اختيار الموقع من الخريطة' }))
+    const point = await screen.findByRole('button', { name: 'اختر نقطة تجريبية' })
+    expect(point.closest('dialog')?.open).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'إلغاء' }))
+  }
+})
