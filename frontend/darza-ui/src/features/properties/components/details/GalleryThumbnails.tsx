@@ -1,3 +1,4 @@
+import { ImageWithPlaceholder } from '../../../../components/ui/ImageWithPlaceholder'
 import type { ImageResponse } from '../../../../types/api'
 
 interface Props {
@@ -18,14 +19,14 @@ export function GalleryThumbnails({ images, title, index, onSelect }: Props) {
           onClick={() => onSelect(position)}
           aria-label={`عرض الصورة ${position + 1}`}
           aria-current={index === position ? 'true' : undefined}
-          className={`cursor-pointer h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline-2 focus-visible:outline-offset-2 ${index === position ? 'border-primary' : 'border-transparent'}`}
+          className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 focus-visible:outline-2 focus-visible:outline-offset-2 ${index === position ? 'border-primary' : 'border-transparent'}`}
         >
-          <img
+          <ImageWithPlaceholder
             src={image.url}
             alt={`${title} — ${position + 1}`}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover"
+            containerClassName="h-full w-full"
           />
         </button>
       ))}

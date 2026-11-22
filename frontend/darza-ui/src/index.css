@@ -18,6 +18,7 @@
   --color-warning: #854d0e;
   --color-warning-soft: #fef9c3;
   --color-danger: #b91c1c;
+  --color-danger-banner: #800020;
   --color-danger-soft: #fee2e2;
   --radius-md: 0.5rem;
   --radius-lg: 1rem;
@@ -39,12 +40,31 @@
   --color-warning: var(--color-warning);
   --color-warning-soft: var(--color-warning-soft);
   --color-danger: var(--color-danger);
+  --color-danger-banner: var(--color-danger-banner);
   --color-danger-soft: var(--color-danger-soft);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --font-sans: 'Cairo', sans-serif;
 }
 @layer base {
+  @media (hover: hover) {
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    a[href],
+    summary,
+    select,
+    label[for],
+    input[type='checkbox'],
+    input[type='radio'],
+    input[type='file'] {
+      cursor: pointer;
+    }
+  }
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
   body {
     margin: 0;
     background: var(--color-background);

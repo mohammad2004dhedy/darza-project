@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-const PRELOAD_MARGIN = '300px 0px'
+const PRELOAD_MARGIN = '600px 0px'
 
 export function useInfiniteScroll(enabled: boolean, onLoad: () => void) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)

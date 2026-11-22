@@ -2,9 +2,16 @@ import type { PropertyDetailsResponse } from '../../../../types/api'
 export function OwnerStatusNotice({ property }: { property: PropertyDetailsResponse }) {
   if (!property.postingStatus || property.postingStatus === 'APPROVED') return null
   return (
-    <aside role="status" className="rounded-lg border border-border bg-background p-4">
+    <aside
+      role="status"
+      className={
+        property.postingStatus === 'REJECTED'
+          ? 'rounded-lg border border-danger-banner/30 bg-danger-banner/10 p-4 text-danger-banner'
+          : 'rounded-lg border border-border bg-background p-4'
+      }
+    >
       {property.postingStatus === 'PENDING' ? (
-        'إعلانك قيد المراجعة ولن يظهر للعامة حتى تتم الموافقة'
+        'الإعلان قيد المراجعة ولن يظهر للعامة حتى تتم الموافقة'
       ) : (
         <>
           تم رفض الإعلان

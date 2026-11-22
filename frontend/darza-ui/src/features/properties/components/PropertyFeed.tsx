@@ -11,6 +11,7 @@ export function PropertyFeed() {
         </h1>
         <p className="text-text-muted">تصفّح العقارات المعروضة للبيع والإيجار.</p>
       </header>
+      <p className="text-sm text-text-muted">جميع العقارات تمت مراجعتها قبل النشر</p>
       <PropertyList query={feed} />
     </section>
   )

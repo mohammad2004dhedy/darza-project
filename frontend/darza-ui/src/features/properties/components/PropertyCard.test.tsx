@@ -28,13 +28,13 @@ function renderCard(property: PropertyCardResponse, eager?: boolean) {
 }
 
 describe('PropertyCard', () => {
-  it('overlays availability on the right and groups listing with property type in the body', () => {
+  it('overlays availability at the start and groups listing with property type in the body', () => {
     render(
       <MemoryRouter>
         <PropertyCard property={{ ...baseProperty, isAvailable: false }} />
       </MemoryRouter>,
     )
-    expect(screen.getByText('غير متاح').parentElement?.className).toContain('right-3')
+    expect(screen.getByText('غير متاح').parentElement?.className).toContain('start-3')
     expect(screen.getByText('للبيع').parentElement).toBe(screen.getByText('أرض').parentElement)
     expect(screen.getByText('للبيع').parentElement?.className).not.toContain('absolute')
     expect(screen.getByText('أرض').querySelector('svg')).not.toBeNull()
@@ -51,7 +51,7 @@ describe('PropertyCard', () => {
     expect(screen.getByText('للبيع')).toBeTruthy()
     expect(screen.queryByText(/غرف|حمامات|م²/)).toBeNull()
     expect(screen.queryByText(/بالساعة|باليوم|بالشهر|بالسنة/)).toBeNull()
-    expect(screen.getByText('القدس - بيت لحم')).toBeTruthy()
+    expect(screen.getByText('بيت لحم').closest('p')).toBeTruthy()
     expect(screen.queryByText('599123456')).toBeNull()
   })
 
@@ -79,7 +79,7 @@ describe('PropertyCard', () => {
     expect(screen.queryByText(/غرف|حمامات/)).toBeNull()
   })
 
-  it('shows zero price, area, rooms and bathrooms for a property', () => {
+  it('shows contact pricing for zero while retaining zero area, rooms and bathrooms', () => {
     renderCard({
       ...baseProperty,
       propertyType: 'APARTMENT',
@@ -88,7 +88,7 @@ describe('PropertyCard', () => {
       rooms: 0,
       bathrooms: 0,
     })
-    expect(screen.getByText('0 ₪')).toBeTruthy()
+    expect(screen.getByText('السعر عند التواصل')).toBeTruthy()
     expect(screen.getByText('0 م²')).toBeTruthy()
     expect(screen.getByText('0 غرف')).toBeTruthy()
     expect(screen.getByText('0 حمامات')).toBeTruthy()
@@ -228,10 +228,10 @@ it('renders property facts as lightly tinted petrol badges', () => {
 })
 
 describe('owner moderation status', () => {
-  it('shows pending status only when requested', () => {
+  it('shows pending status from the response', () => {
     render(
       <MemoryRouter>
-        <PropertyCard property={{ ...baseProperty, postingStatus: 'PENDING' }} showStatus />
+        <PropertyCard property={{ ...baseProperty, postingStatus: 'PENDING' }} />
       </MemoryRouter>,
     )
     expect(screen.getByText('قيد المراجعة')).toBeTruthy()
@@ -247,7 +247,6 @@ describe('owner moderation status', () => {
             postingStatus: 'REJECTED',
             rejectionReason: 'صور غير واضحة',
           }}
-          showStatus
         />
       </MemoryRouter>,
     )
@@ -255,23 +254,60 @@ describe('owner moderation status', () => {
     expect(screen.getByText('صور غير واضحة').className).toContain('line-clamp-2')
   })
 
-  it('does not add a moderation badge for approved properties', () => {
+  it('shows approved status without an overlay', () => {
     render(
       <MemoryRouter>
-        <PropertyCard property={{ ...baseProperty, postingStatus: 'APPROVED' }} showStatus />
+        <PropertyCard property={{ ...baseProperty, postingStatus: 'APPROVED' }} />
       </MemoryRouter>,
     )
     expect(screen.queryByText('مرفوض')).toBeNull()
     expect(screen.queryByText('قيد المراجعة')).toBeNull()
+    expect(screen.getByText('مقبول')).toBeTruthy()
+    expect(screen.queryByTestId('status-overlay')).toBeNull()
   })
 
-  it.each(['PENDING', 'REJECTED'] as const)(
-    'hides %s moderation data by default',
-    (postingStatus) => {
-      renderCard({ ...baseProperty, postingStatus, rejectionReason: 'سبب خاص بالمالك' })
-      expect(screen.queryByText('مرفوض')).toBeNull()
-      expect(screen.queryByText('قيد المراجعة')).toBeNull()
-      expect(screen.queryByText('سبب خاص بالمالك')).toBeNull()
-    },
-  )
+  it('omits status when absent from the response', () => {
+    renderCard(baseProperty)
+    expect(screen.queryByTestId('status-overlay')).toBeNull()
+    expect(screen.queryByText('مقبول')).toBeNull()
+  })
 })
+
+it.each([
+  ['HOURLY', 'بالساعة'],
+  ['DAILY', 'يومي'],
+  ['MONTHLY', 'شهري'],
+  ['YEARLY', 'سنوي'],
+] as const)(
+  'adds a matching %s rent tag without changing the price suffix',
+  (rentPeriod, label) => {
+    renderCard({ ...baseProperty, listingType: 'RENT', rentPeriod })
+    const listing = screen.getByText('للإيجار')
+    expect(listing.nextElementSibling?.textContent).toBe(label)
+    expect(screen.getByText('أرض').className).toBe(listing.className)
+    expect(listing.parentElement?.className).toContain('flex-wrap')
+  },
+)
+
+it('keeps injected actions outside the stretched link', () => {
+  render(
+    <MemoryRouter>
+      <PropertyCard property={baseProperty} actions={<button>إدارة</button>} />
+    </MemoryRouter>,
+  )
+  expect(screen.getByRole('button', { name: 'إدارة' }).closest('a')).toBeNull()
+  expect(screen.getByRole('button', { name: 'إدارة' }).closest('article')).toBeTruthy()
+})
+
+it.each(['PENDING', 'REJECTED'] as const)(
+  'places %s status opposite availability with a noninteractive overlay',
+  (postingStatus) => {
+    renderCard({ ...baseProperty, postingStatus })
+    const badge = screen.getByText(postingStatus === 'PENDING' ? 'قيد المراجعة' : 'مرفوض')
+    expect(badge.className).toContain('end-3')
+    expect(screen.getByTestId('status-overlay').className).toContain('pointer-events-none')
+    const location = screen.getByText('بيت لحم').closest('p')!
+    expect(location.textContent).toBe('بيت لحم، القدس')
+    expect(location.querySelectorAll('bdi')).toHaveLength(2)
+  },
+)

@@ -48,7 +48,7 @@ describe('useInfiniteScroll', () => {
 
     const observer = MockIntersectionObserver.instances[0]
     const sentinel = screen.getByTestId('sentinel')
-    expect(observer.options?.rootMargin).toBe('300px 0px')
+    expect(observer.options?.rootMargin).toBe('600px 0px')
     expect(observer.observe).toHaveBeenCalledWith(sentinel)
 
     observer.trigger(sentinel, true)
