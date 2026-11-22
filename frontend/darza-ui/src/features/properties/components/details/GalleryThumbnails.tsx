@@ -1,4 +1,5 @@
 import { ImageWithPlaceholder } from '../../../../components/ui/ImageWithPlaceholder'
+import { useEffect, useRef } from 'react'
 import type { ImageResponse } from '../../../../types/api'
 
 interface Props {
@@ -9,9 +10,20 @@ interface Props {
 }
 
 export function GalleryThumbnails({ images, title, index, onSelect }: Props) {
+  const strip = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const element = strip.current
+    const thumbnail = element?.children[index] as HTMLElement | undefined
+    if (!element || !thumbnail) return
+    const bounds = element.getBoundingClientRect()
+    const item = thumbnail.getBoundingClientRect()
+    const delta = item.left < bounds.left ? item.left - bounds.left
+      : item.right > bounds.right ? item.right - bounds.right : 0
+    if (delta) element.scrollTo({ left: element.scrollLeft + delta, behavior: 'instant' })
+  }, [index])
   if (images.length < 2) return null
   return (
-    <div dir="ltr" className="flex gap-2 overflow-x-auto p-2" aria-label="الصور المصغرة">
+    <div ref={strip} dir="ltr" className="flex gap-2 overflow-x-auto p-2" aria-label="الصور المصغرة">
       {images.map((image, position) => (
         <button
           key={`${image.path}-${position}`}

@@ -2,7 +2,8 @@ import { ImageWithPlaceholder } from '../../../../components/ui/ImageWithPlaceho
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import type { ImageResponse } from '../../../../types/api'
-import { useDesktopGallery, useGallery } from '../../useGallery'
+import { useDesktopGallery } from '../../useGallery'
+import { usePropertyGallery } from '../../usePropertyGallery'
 import { GalleryCounterBadge } from './GalleryCounterBadge'
 import { GalleryThumbnails } from './GalleryThumbnails'
 import { PhotoViewer } from './PhotoViewer'
@@ -13,7 +14,7 @@ interface Props {
 }
 
 export function PropertyGallery({ images, title }: Props) {
-  const { index: currentIndex, track, goTo, onScroll, onKeyDown } = useGallery(images.length)
+  const { activeIndex: currentIndex, track, goTo, onScroll, onKeyDown } = usePropertyGallery(images.length)
   const desktop = useDesktopGallery()
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
   if (!images.length)
