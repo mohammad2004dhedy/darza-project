@@ -5,7 +5,6 @@ export function usePropertyGallery(count: number) {
   const track = useRef<HTMLDivElement>(null)
   const navigation = useRef({ isProgrammatic: false, targetIndex: 0 })
   const idle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const frame = useRef<number | undefined>(undefined)
 
   const position = useCallback(() => {
     const element = track.current
@@ -14,7 +13,9 @@ export function usePropertyGallery(count: number) {
     let nearest = 0
     let distance = Infinity
     Array.from(element.children).forEach((child, index) => {
-      const delta = Math.abs(Math.abs((child as HTMLElement).offsetLeft - origin) - Math.abs(element.scrollLeft))
+      const delta = Math.abs(
+        Math.abs((child as HTMLElement).offsetLeft - origin) - Math.abs(element.scrollLeft),
+      )
       if (delta < distance) {
         distance = delta
         nearest = index
@@ -24,11 +25,12 @@ export function usePropertyGallery(count: number) {
   }, [])
 
   const settle = useCallback(() => {
-    if (frame.current !== undefined) cancelAnimationFrame(frame.current)
-    frame.current = undefined
+    const index = position()
+    // An earlier scroll can finish after a new target was selected.
+    if (navigation.current.isProgrammatic && index !== navigation.current.targetIndex) return
     clearTimeout(idle.current)
     navigation.current.isProgrammatic = false
-    setActiveIndex(position())
+    setActiveIndex(index)
   }, [position])
 
   useEffect(() => {
@@ -37,33 +39,33 @@ export function usePropertyGallery(count: number) {
     return () => {
       element?.removeEventListener('scrollend', settle)
       clearTimeout(idle.current)
-      if (frame.current !== undefined) cancelAnimationFrame(frame.current)
     }
   }, [settle])
 
-  const goTo = useCallback((next: number) => {
-    const element = track.current
-    const targetIndex = Math.max(0, Math.min(count - 1, next))
-    const slide = element?.children[targetIndex] as HTMLElement | undefined
-    if (!element || !slide) return
-    navigation.current = { isProgrammatic: true, targetIndex }
-    setActiveIndex(targetIndex)
-    clearTimeout(idle.current)
-    idle.current = setTimeout(settle, 300)
-    element.scrollTo({
-      left: slide.offsetLeft - (element.children[0] as HTMLElement).offsetLeft,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
-    })
-  }, [count, settle])
+  const goTo = useCallback(
+    (next: number) => {
+      const element = track.current
+      const targetIndex = Math.max(0, Math.min(count - 1, next))
+      const slide = element?.children[targetIndex] as HTMLElement | undefined
+      if (!element || !slide) return
+      navigation.current = { isProgrammatic: true, targetIndex }
+      setActiveIndex(targetIndex)
+      clearTimeout(idle.current)
+      idle.current = setTimeout(() => {
+        navigation.current.isProgrammatic = false
+      }, 400)
+      element.scrollTo({
+        left: slide.offsetLeft - (element.children[0] as HTMLElement).offsetLeft,
+        behavior: 'auto',
+      })
+    },
+    [count],
+  )
 
   const onScroll = () => {
+    if (navigation.current.isProgrammatic) return
     clearTimeout(idle.current)
-    idle.current = setTimeout(settle, 300)
-    if (navigation.current.isProgrammatic || frame.current !== undefined) return
-    frame.current = requestAnimationFrame(() => {
-      frame.current = undefined
-      if (!navigation.current.isProgrammatic) setActiveIndex(position())
-    })
+    idle.current = setTimeout(settle, 120)
   }
 
   const onKeyDown = (event: KeyboardEvent) => {

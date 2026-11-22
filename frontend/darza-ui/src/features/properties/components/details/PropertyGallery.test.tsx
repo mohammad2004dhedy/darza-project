@@ -66,7 +66,7 @@ describe('PropertyGallery', () => {
     )
     render(<PropertyGallery images={images} title="منزل" />)
     fireEvent.keyDown(screen.getByRole('button', { name: 'تكبير الصورة 1' }), { key: 'ArrowRight' })
-    expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({ left: 0, behavior: 'instant' })
+    expect(Element.prototype.scrollTo).toHaveBeenLastCalledWith({ left: 0, behavior: 'auto' })
   })
 
   it('serializes rapid close and reopen before history Back settles', async () => {
