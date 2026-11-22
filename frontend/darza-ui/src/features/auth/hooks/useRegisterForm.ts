@@ -8,7 +8,7 @@ import { useAuth } from '../../../context/auth'
 import { useToast } from '../../../components/ui/useToast'
 import { usePhoneInput } from '../../../components/form/usePhoneInput'
 import { resolveSubmitError } from '../../../lib/formErrors'
-import { registerSchema, type RegisterValues } from '../schemas'
+import { registerSchema, type RegisterSubmission, type RegisterValues } from '../schemas'
 
 const REGISTER_FIELDS = [
   'displayName',
@@ -25,13 +25,13 @@ export function useRegisterForm() {
   const { showToast } = useToast()
   const navigate = useNavigate()
   const [formError, setFormError] = useState<string | null>(null)
-  const form = useForm<RegisterValues>({
+  const form = useForm<RegisterValues, unknown, RegisterSubmission>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       displayName: '',
       email: '',
       password: '',
-      countryCode: '970',
+      countryCode: '',
       phoneNumber: '',
       cityId: '',
       townId: '',

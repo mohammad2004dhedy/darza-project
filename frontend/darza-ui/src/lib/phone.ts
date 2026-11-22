@@ -1,7 +1,10 @@
 import { z } from 'zod'
 
 export const COUNTRY_CODES = ['970', '972'] as const
-export type CountryCode = (typeof COUNTRY_CODES)[number]
+export type CountryCode = (typeof COUNTRY_CODES)[number] | ''
+export const countryCodeSchema = z
+  .enum(['', ...COUNTRY_CODES])
+  .pipe(z.enum(COUNTRY_CODES, { error: 'اختار كود الدولة +970 أو +972' }))
 
 // verify against official numbering plans
 export const PS_PREFIXES = ['56', '59'] as const
@@ -16,7 +19,7 @@ export interface PhoneInputState {
 }
 
 export const initialPhoneInput: PhoneInputState = {
-  countryCode: '970',
+  countryCode: '',
   phoneNumber: '',
   codeChosen: false,
 }
@@ -49,17 +52,18 @@ export function applyPhoneInput(state: PhoneInputState, raw: string): PhoneInput
   if (phoneNumber && !phoneNumber.startsWith('5')) return state
   if (phoneNumber.length >= 2 && !PREFIXES.includes(phoneNumber.slice(0, 2))) return state
 
-  if (isIsraeliNumber(phoneNumber)) return { countryCode: '972', phoneNumber, codeChosen: true }
+  if (isIsraeliNumber(phoneNumber))
+    return { countryCode: '972', phoneNumber, codeChosen: state.codeChosen }
   if (pastedCode) return { countryCode: pastedCode, phoneNumber, codeChosen: true }
   if (isPalestinianNumber(phoneNumber) && !state.codeChosen) {
-    return { ...state, countryCode: '970', phoneNumber }
+    return { ...state, countryCode: '', phoneNumber }
   }
   return { ...state, phoneNumber }
 }
 
 export function selectCountryCode(state: PhoneInputState, code: CountryCode): PhoneInputState {
-  if (code === '970' && isIsraeliNumber(state.phoneNumber)) return state
-  return { ...state, countryCode: code, codeChosen: true }
+  if (code !== '972' && isIsraeliNumber(state.phoneNumber)) return state
+  return { ...state, countryCode: code, codeChosen: code !== '' }
 }
 
 /** Mirrors the backend rules for the countryCode and phoneNumber request fields. */
@@ -70,7 +74,7 @@ export function isValidPhone(countryCode: string, phoneNumber: string): boolean 
 }
 
 export const phoneFieldsSchema = z
-  .object({ countryCode: z.enum(COUNTRY_CODES), phoneNumber: z.string() })
+  .object({ countryCode: countryCodeSchema, phoneNumber: z.string() })
   .superRefine(({ countryCode, phoneNumber }, context) => {
     if (!/^5\d{8}$/.test(phoneNumber) || !PREFIXES.includes(phoneNumber.slice(0, 2))) {
       context.addIssue({

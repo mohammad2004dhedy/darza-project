@@ -5,12 +5,13 @@ import { MainLayout } from '../components/layout/MainLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { AdminRoute } from './AdminRoute'
 import { GuestRoute } from './GuestRoute'
+const Settings = lazy(() => import('../pages/SettingsPage'))
+const AccountSettings = lazy(() => import('../pages/AccountSettingsPage'))
 const Home = lazy(() => import('../pages/HomePage'))
 const Login = lazy(() => import('../pages/LoginPage'))
 const Register = lazy(() => import('../pages/RegisterPage'))
 const PropertyDetails = lazy(() => import('../pages/PropertyDetailsPage'))
 const Profile = lazy(() => import('../pages/ProfilePage'))
-const MyProperties = lazy(() => import('../pages/MyPropertiesPage'))
 const CreateProperty = lazy(() => import('../pages/CreatePropertyPage'))
 const EditProperty = lazy(() => import('../pages/EditPropertyPage'))
 const Admin = lazy(() => import('../pages/AdminPage'))
@@ -37,8 +38,10 @@ export function AppRoutes() {
           <Route path="/register" element={<Register />} />
         </Route>
         <Route element={<ProtectedRoute />}>
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/account" element={<AccountSettings />} />
           <Route path="/profile" element={<ProfileRedirect />} />
-          <Route path="/my-properties" element={<MyProperties />} />
+          <Route path="/my-properties" element={<Navigate to="/profile" replace />} />
           <Route path="/properties/new" element={<CreateProperty />} />
           <Route path="/properties/:id/edit" element={<EditProperty />} />
         </Route>

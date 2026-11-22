@@ -30,6 +30,7 @@ export function CountryCodeSelect({
         dir="ltr"
         value={value}
         options={options}
+        placeholder="اختار الكود"
         onChange={(event) => onChange(event.target.value as CountryCode)}
       />
     </div>

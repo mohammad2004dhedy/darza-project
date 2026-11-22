@@ -1,7 +1,5 @@
 import { ApiError } from '../../../api/client'
 import { useMyProfile, useMyProperties } from '../hooks'
-import { LogoutButton } from './LogoutButton'
-import { MyAccountInfo } from './MyAccountInfo'
 import { ProfileError } from './ProfileError'
 import { ProfileHeader } from './ProfileHeader'
 import { ProfileNotFound } from './ProfileNotFound'
@@ -17,9 +15,7 @@ export function MyProfileView() {
 
   return (
     <div className="space-y-6">
-      <ProfileHeader user={profile.data} />
-      <MyAccountInfo user={profile.data} />
-      <LogoutButton />
+      <ProfileHeader user={profile.data} isOwner />
       <UserPropertiesSection query={properties} showStatus />
     </div>
   )

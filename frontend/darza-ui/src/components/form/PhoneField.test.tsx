@@ -7,7 +7,7 @@ import { PhoneField } from './PhoneField'
 import { usePhoneInput, type PhoneValue } from './usePhoneInput'
 
 function Harness({ error }: { error?: string }) {
-  const [value, setValue] = useState<PhoneValue>({ countryCode: '970', phoneNumber: '' })
+  const [value, setValue] = useState<PhoneValue>({ countryCode: '', phoneNumber: '' })
   const phone = usePhoneInput(value, setValue)
   return <PhoneField {...value} {...phone} error={error} />
 }
@@ -24,11 +24,15 @@ function setup(error?: string) {
 afterEach(cleanup)
 
 describe('PhoneField', () => {
-  it('drops the leading zero and keeps 970 for Palestinian numbers', async () => {
+  it('requires a code choice for Palestinian numbers', async () => {
     const { user, number, code } = setup()
     await user.type(number, '0599123456')
     expect(number.value).toBe('599123456')
+    expect(code.value).toBe('')
+    expect(screen.getByRole('alert').textContent).toBe('اختار كود الدولة +970 أو +972')
+    await user.selectOptions(code, '970')
     expect(code.value).toBe('970')
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('selects 972 and disables 970 for Israeli prefixes', async () => {

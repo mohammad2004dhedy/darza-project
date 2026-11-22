@@ -56,14 +56,20 @@ it('shows the owner view and calls only the private endpoints', async () => {
     throw new Error(`Unexpected endpoint: ${path}`)
   })
   const { auth } = renderPage('7', 7)
-  expect(await screen.findByText('private@example.com')).toBeTruthy()
+  expect(await screen.findByRole('heading', { name: 'معلن' })).toBeTruthy()
+  expect(screen.queryByText('private@example.com')).toBeNull()
   expect(await screen.findByText('لم تنشر أي إعلان بعد')).toBeTruthy()
   expect(request.mock.calls.map(([path]) => path)).toEqual([
     '/api/users/me',
     '/api/users/me/properties?page=0',
   ])
-  fireEvent.click(screen.getByRole('button', { name: 'تسجيل الخروج' }))
-  expect(auth.logout).toHaveBeenCalledOnce()
+  expect(screen.queryByRole('button', { name: 'تسجيل الخروج' })).toBeNull()
+  expect(auth.logout).not.toHaveBeenCalled()
+  expect(screen.getByRole('link', { name: 'الإعدادات' }).getAttribute('href')).toBe('/settings')
+  expect(screen.getByRole('link', { name: 'إنشاء إعلان' }).getAttribute('href')).toBe(
+    '/properties/new',
+  )
+  expect(screen.getByRole('heading', { name: 'إعلاناتي' })).toBeTruthy()
 })
 
 it.each([null, 8])(
@@ -78,6 +84,7 @@ it.each([null, 8])(
     expect(await screen.findByRole('heading', { name: 'معلن' })).toBeTruthy()
     expect(await screen.findByText('لا توجد إعلانات حالياً')).toBeTruthy()
     expect(screen.queryByText('private@example.com')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'الإعدادات' })).toBeNull()
     expect(request.mock.calls.map(([path]) => path)).toEqual([
       '/api/public/users/7/profile',
       '/api/public/users/7/properties?page=0',
@@ -134,16 +141,20 @@ it('exposes the lazy public profile route to logged-out visitors', async () => {
   expect(await screen.findByRole('heading', { name: 'معلن' })).toBeTruthy()
 })
 
-it('redirects the legacy profile route to the current user profile', async () => {
-  const request = vi
-    .spyOn(client, 'request')
-    .mockImplementation(
-      async (path) => (path.includes('properties') ? properties : privateUser) as never,
-    )
-  renderPage('7', 7, '/profile')
-  expect(await screen.findByText('private@example.com')).toBeTruthy()
-  expect(request.mock.calls.map(([path]) => path)).toEqual([
-    '/api/users/me',
-    '/api/users/me/properties?page=0',
-  ])
-})
+it.each(['/profile', '/my-properties'])(
+  'redirects %s to the current user profile',
+  async (route) => {
+    const request = vi
+      .spyOn(client, 'request')
+      .mockImplementation(
+        async (path) => (path.includes('properties') ? properties : privateUser) as never,
+      )
+    renderPage('7', 7, route)
+    expect(await screen.findByRole('heading', { name: 'معلن' })).toBeTruthy()
+    expect(screen.queryByText('private@example.com')).toBeNull()
+    expect(request.mock.calls.map(([path]) => path)).toEqual([
+      '/api/users/me',
+      '/api/users/me/properties?page=0',
+    ])
+  },
+)
