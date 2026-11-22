@@ -406,6 +406,7 @@ export function PropertyWizard({ wizard }: StepProps) {
         {wizard.draftRestored && <Button size="sm" variant="ghost" onClick={wizard.restartDraft}>بدء من جديد</Button>}
         <p className="text-sm text-text-muted">الخطوة {wizard.step + 1} من 7</p>
         <WizardStepper
+          editMode={wizard.editMode}
           step={wizard.step}
           completed={wizard.completed}
           canVisit={wizard.canVisit}

@@ -12,6 +12,10 @@ afterEach(cleanup)
 it('opens the picker without geolocation and only commits after confirmation', async () => {
   const onChange = vi.fn(), onLocate = vi.fn()
   render(<LocationPicker state={{ status: 'idle' }} onChange={onChange} onLocate={onLocate} onClear={vi.fn()} />)
+  expect(screen.getByText('أو')).toBeTruthy()
+  const locate = screen.getByRole('button', { name: 'استخدام موقعي الحالي' })
+  expect(locate.getAttribute('aria-describedby')).toBe('current-location-hint')
+  expect(locate.parentElement?.querySelector('#current-location-hint')).not.toBeNull()
   expect(onLocate).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'اختيار الموقع من الخريطة' }))
   expect((screen.getByRole('button', { name: 'تأكيد الموقع' }) as HTMLButtonElement).disabled).toBe(true)
@@ -30,4 +34,15 @@ it('shows accuracy warning and permits correction and removal', async () => {
   expect(onClear).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', { name: 'استخدام موقعي الحالي' }))
   expect(onLocate).toHaveBeenCalledOnce()
+})
+
+it('unmounts on cancel and mounts again only inside an open dialog', async () => {
+  render(<LocationPicker state={{ status: 'idle' }} onChange={vi.fn()} onLocate={vi.fn()} onClear={vi.fn()} />)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    expect(screen.queryByRole('button', { name: 'اختر نقطة تجريبية' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'اختيار الموقع من الخريطة' }))
+    const point = await screen.findByRole('button', { name: 'اختر نقطة تجريبية' })
+    expect(point.closest('dialog')?.open).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'إلغاء' }))
+  }
 })
