@@ -1,3 +1,4 @@
+import { RejectionReason } from './RejectionReason'
 import { Tag } from './Tag'
 import { memo, useId, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -65,8 +66,8 @@ function PropertyCardView({ property, eager = false, actions }: PropertyCardProp
             </Tag>
           )}
         </div>
-        {property.postingStatus === 'REJECTED' && property.rejectionReason && (
-          <p className="line-clamp-2 text-sm text-danger">{property.rejectionReason}</p>
+        {property.postingStatus === 'REJECTED' && (
+          <RejectionReason reason={property.rejectionReason} />
         )}
         <h2 className="line-clamp-2 font-bold text-text">
           <Link
