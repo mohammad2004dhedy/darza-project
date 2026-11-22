@@ -7,7 +7,7 @@ export function OwnerStatusNotice({ property }: { property: PropertyDetailsRespo
       className={
         property.postingStatus === 'REJECTED'
           ? 'rounded-lg border border-danger-banner/30 bg-danger-banner/10 p-4 text-danger-banner'
-          : 'rounded-lg border border-border bg-background p-4'
+          : 'rounded-lg border border-warning/30 bg-warning/20 p-4 font-bold text-text'
       }
     >
       {property.postingStatus === 'PENDING' ? (
