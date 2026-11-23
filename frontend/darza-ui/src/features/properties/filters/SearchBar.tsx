@@ -1,23 +1,45 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 import { Input } from '../../../components/ui/Input'
 
-export function SearchBar({ text, onChange }: { text?: string; onChange: (text: string) => void }) {
-  const [value, setValue] = useState(text ?? '')
+export interface SearchBarHandle {
+  flush: () => string
+}
+
+export function SearchBar({ text, onChange, ref }: {
+  text?: string
+  onChange: (text: string) => void
+  ref?: Ref<SearchBarHandle>
+}) {
+  const input = useRef<HTMLInputElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const onChangeRef = useRef(onChange)
+  useEffect(() => { onChangeRef.current = onChange }, [onChange])
+  useEffect(() => {
+    clearTimeout(timer.current)
+    if (input.current) input.current.value = text ?? ''
+  }, [text])
   useEffect(() => () => clearTimeout(timer.current), [])
+  useImperativeHandle(ref, () => ({
+    flush: () => {
+      clearTimeout(timer.current)
+      const value = input.current?.value ?? ''
+      if (input.current) input.current.value = text ?? ''
+      return value
+    },
+  }), [text])
   return (
     <Input
+      ref={input}
       type="search"
       aria-label="البحث عن عقار"
       placeholder="ابحث عن عقار"
       maxLength={100}
-      value={value}
+      defaultValue={text ?? ''}
       className="min-w-0 flex-1"
       onChange={(event) => {
         const next = event.target.value
-        setValue(next)
         clearTimeout(timer.current)
-        timer.current = setTimeout(() => onChange(next), 400)
+        timer.current = setTimeout(() => onChangeRef.current(next), 400)
       }}
     />
   )

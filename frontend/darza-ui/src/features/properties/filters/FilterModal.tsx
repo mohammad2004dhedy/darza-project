@@ -7,10 +7,11 @@ import { useCities, useTowns } from '../../location/hooks'
 import { ChipGroup } from './ChipGroup'
 import { currencyOptions, listingTypeOptions, propertyTypeOptions, sortOptions, validatePrices, type PropertyFilters } from './model'
 
-export default function FilterModal({ filters, onApply, onClose }: {
+export default function FilterModal({ filters, onApply, onClose, onClear }: {
   filters: PropertyFilters
   onApply: (filters: PropertyFilters) => void
   onClose: () => void
+  onClear: () => void
 }) {
   const [draft, setDraft] = useState(filters)
   const [prices, setPrices] = useState({ minPrice: String(filters.minPrice ?? ''), maxPrice: String(filters.maxPrice ?? '') })
@@ -51,7 +52,7 @@ export default function FilterModal({ filters, onApply, onClose }: {
             onChange={(event) => update('townId', event.target.value ? Number(event.target.value) : undefined)} />
         </label>
         <ChipGroup label="الترتيب" options={sortOptions} value={draft.sortType ?? 'NEWEST'} onChange={(value) => update('sortType', value)} />
-        <Button variant="ghost" onClick={() => { setDraft({}); setPrices({ minPrice: '', maxPrice: '' }) }}>مسح الكل</Button>
+        <Button variant="ghost" onClick={onClear}>مسح الكل</Button>
       </div>
     </ConfirmModal>
   )
