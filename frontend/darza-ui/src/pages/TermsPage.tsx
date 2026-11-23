@@ -1,4 +1,6 @@
-import { Placeholder } from './Placeholder'
+import { StaticPage } from '../components/ui/StaticPage'
+import { termsContent } from '../content/terms'
+
 export default function TermsPage() {
-  return <Placeholder title="شروط الاستخدام" />
+  return <StaticPage title="شروط الاستخدام" sections={termsContent} />
 }

@@ -1,4 +1,6 @@
-import { Placeholder } from './Placeholder'
+import { StaticPage } from '../components/ui/StaticPage'
+import { aboutContent } from '../content/about'
+
 export default function AboutPage() {
-  return <Placeholder title="عن درزة" />
+  return <StaticPage title="عن درزة" sections={aboutContent} />
 }
