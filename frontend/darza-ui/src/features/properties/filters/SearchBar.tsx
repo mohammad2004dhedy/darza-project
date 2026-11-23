@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { Input } from '../../../components/ui/Input'
 
 export interface SearchBarHandle {
@@ -10,36 +10,51 @@ export function SearchBar({ text, onChange, ref }: {
   onChange: (text: string) => void
   ref?: Ref<SearchBarHandle>
 }) {
-  const input = useRef<HTMLInputElement>(null)
+  const [value, setValue] = useState(text ?? '')
+  const [previousText, setPreviousText] = useState(text)
+  const submitted = useRef<string | undefined>(undefined)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const onChangeRef = useRef(onChange)
   useEffect(() => { onChangeRef.current = onChange }, [onChange])
-  useEffect(() => {
-    clearTimeout(timer.current)
-    if (input.current) input.current.value = text ?? ''
-  }, [text])
-  useEffect(() => () => clearTimeout(timer.current), [])
-  useImperativeHandle(ref, () => ({
-    flush: () => {
+  if (text !== previousText) {
+    setPreviousText(text)
+    if (text !== submitted.current) {
       clearTimeout(timer.current)
-      const value = input.current?.value ?? ''
-      if (input.current) input.current.value = text ?? ''
-      return value
-    },
-  }), [text])
+      timer.current = undefined
+      setValue(text ?? '')
+    }
+  }
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const flush = () => {
+    if (timer.current !== undefined) {
+      clearTimeout(timer.current)
+      timer.current = undefined
+      submitted.current = value.trim() || undefined
+      onChangeRef.current(value)
+    }
+    return value
+  }
+  useImperativeHandle(ref, () => ({ flush }))
   return (
     <Input
-      ref={input}
       type="search"
       aria-label="البحث عن عقار"
       placeholder="ابحث عن عقار"
       maxLength={100}
-      defaultValue={text ?? ''}
+      value={value}
       className="min-w-0 flex-1"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') { event.preventDefault(); flush() }
+      }}
       onChange={(event) => {
         const next = event.target.value
+        setValue(next)
         clearTimeout(timer.current)
-        timer.current = setTimeout(() => onChangeRef.current(next), 400)
+        timer.current = setTimeout(() => {
+          timer.current = undefined
+          submitted.current = next.trim() || undefined
+          onChangeRef.current(next)
+        }, 400)
       }}
     />
   )
