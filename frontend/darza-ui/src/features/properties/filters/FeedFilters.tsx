@@ -17,8 +17,8 @@ export function FeedFilters({ filters, onChange }: {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <SearchBar ref={search} text={filters.text} onChange={(text) => onChange({ ...filters, text }, true)} />
-        <Button variant="outline" onClick={() => setOpen(true)}>الفلاتر</Button>
-        {key && <FilterBadges filters={filters} onChange={(next) => { search.current?.flush(); onChange(next) }} />}
+        <Button variant="outline" onClick={() => { search.current?.flush(); setOpen(true) }}>الفلاتر</Button>
+        {key && <FilterBadges filters={filters} onChange={(next) => { onChange({ ...next, text: search.current?.flush() ?? filters.text }) }} />}
       </div>
       {open && <Suspense fallback={<p role="status">جارٍ تحميل الفلاتر</p>}>
         <FilterModal onClear={() => { search.current?.flush(); onChange({}); setOpen(false) }} filters={filters} onClose={() => setOpen(false)} onApply={(next) => { onChange({ ...next, text: search.current?.flush() ?? filters.text }); setOpen(false) }} />

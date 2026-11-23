@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { FeedFilters } from './FeedFilters'
 import type { PropertyFilters } from './model'
@@ -45,4 +47,62 @@ it.each([false, true])('preserves search on modal Apply when debounce already fi
   const calls = onChange.mock.calls.length
   act(() => vi.advanceTimersByTime(400))
   expect(onChange).toHaveBeenCalledTimes(calls)
+})
+
+function SyncedFilters() {
+  const [filters, setFilters] = useState<PropertyFilters>({})
+  return <FeedFilters filters={filters} onChange={setFilters} />
+}
+
+it('keeps focus and caret through a URL acknowledgement using userEvent', async () => {
+  vi.useFakeTimers()
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  render(<SyncedFilters />)
+  const input = screen.getByRole('searchbox') as HTMLInputElement
+  await user.type(input, 'house ')
+  act(() => vi.advanceTimersByTime(400))
+  expect(screen.getByRole('searchbox')).toBe(input)
+  expect(document.activeElement).toBe(input)
+  expect(input.value).toBe('house ')
+  expect(input.selectionStart).toBe(6)
+})
+
+it('flushes on opening and preserves typing after opening on Apply', async () => {
+  const user = userEvent.setup()
+  const onChange = vi.fn()
+  render(<FeedFilters filters={{}} onChange={onChange} />)
+  await user.type(screen.getByRole('searchbox'), 'new')
+  await user.click(screen.getByRole('button', { name: 'الفلاتر' }))
+  expect(onChange).toHaveBeenLastCalledWith({ text: 'new' }, true)
+  await screen.findByRole('button', { name: 'تطبيق' })
+  await user.type(screen.getByRole('searchbox'), ' text')
+  await user.click(screen.getByRole('button', { name: 'تطبيق' }))
+  expect(onChange).toHaveBeenLastCalledWith({ propertyType: 'HOUSE', text: 'new text' })
+  expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('new text')
+})
+
+it('flushes immediately on Enter without another debounce update', async () => {
+  vi.useFakeTimers()
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  const onChange = vi.fn()
+  render(<FeedFilters filters={{}} onChange={onChange} />)
+  await user.type(screen.getByRole('searchbox'), 'house{Enter}')
+  expect(onChange).toHaveBeenLastCalledWith({ text: 'house' }, true)
+  act(() => vi.advanceTimersByTime(400))
+  expect(onChange).toHaveBeenCalledTimes(1)
+})
+
+it('does not overwrite newer typing when an earlier URL update arrives', async () => {
+  vi.useFakeTimers()
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  const onChange = vi.fn()
+  const { rerender } = render(<FeedFilters filters={{}} onChange={onChange} />)
+  const input = screen.getByRole('searchbox') as HTMLInputElement
+  await user.type(input, 'old')
+  act(() => vi.advanceTimersByTime(400))
+  await user.type(input, ' newer')
+  rerender(<FeedFilters filters={{ text: 'old' }} onChange={onChange} />)
+  expect(input.value).toBe('old newer')
+  act(() => vi.advanceTimersByTime(400))
+  expect(onChange).toHaveBeenLastCalledWith({ text: 'old newer' }, true)
 })
