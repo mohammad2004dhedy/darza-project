@@ -1,4 +1,6 @@
-import { Placeholder } from './Placeholder'
+import { StaticPage } from '../components/ui/StaticPage'
+import { privacyContent } from '../content/privacy'
+
 export default function PrivacyPage() {
-  return <Placeholder title="سياسة الخصوصية" />
+  return <StaticPage title="سياسة الخصوصية" sections={privacyContent} />
 }
