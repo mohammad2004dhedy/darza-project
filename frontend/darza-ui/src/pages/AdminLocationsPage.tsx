@@ -1,4 +1,5 @@
-import { Placeholder } from './Placeholder'
+import { AdminNavigation } from '../features/admin/AdminNavigation'
+import { LocationManagement } from '../features/admin/LocationManagement'
 export default function AdminLocationsPage() {
-  return <Placeholder title="إدارة المدن والبلدات" />
+  return <><AdminNavigation /><LocationManagement /></>
 }
