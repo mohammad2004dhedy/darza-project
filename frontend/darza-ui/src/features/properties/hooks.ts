@@ -1,11 +1,13 @@
 import { ApiError } from '../../api/client'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { getFeed, getPropertyDetails } from './api'
+import { getFeed, getPropertyDetails, searchProperties } from './api'
+import { hasActiveFilters, type PropertyFilters } from './filters/model'
 
-export function useFeed() {
+export function usePropertyFeed(filters: PropertyFilters) {
   return useInfiniteQuery({
-    queryKey: ['properties', 'feed'],
-    queryFn: ({ pageParam }) => getFeed(pageParam),
+    queryKey: ['properties', filters],
+    queryFn: ({ pageParam }) =>
+      hasActiveFilters(filters) ? searchProperties(filters, pageParam) : getFeed(pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
     staleTime: 60_000,
