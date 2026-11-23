@@ -14,5 +14,6 @@ export function useTowns(cityId: number | undefined) {
     queryKey: ['towns', cityId],
     queryFn: () => locationApi.getTowns(cityId as number),
     enabled: cityId !== undefined,
+    staleTime: Infinity,
   })
 }
