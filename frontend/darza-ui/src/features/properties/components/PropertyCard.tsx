@@ -21,23 +21,23 @@ export interface PropertyCardProps {
 function PropertyCardView({ property, eager = false, actions }: PropertyCardProps) {
   const id = useId()
   return (
-    <article className="relative h-full overflow-hidden rounded-lg border border-border bg-surface">
+    <article className="relative isolate h-full overflow-hidden rounded-lg border border-border bg-surface">
       {property.postingStatus && property.postingStatus !== 'APPROVED' && (
         <div
           aria-hidden="true"
           data-testid="status-overlay"
-          className={`pointer-events-none absolute inset-0 z-10 ${property.postingStatus === 'REJECTED' ? 'bg-danger/5' : 'bg-text-muted/10'}`}
+          className={`pointer-events-none absolute inset-0 z-(--z-inner-overlay) ${property.postingStatus === 'REJECTED' ? 'bg-danger/5' : 'bg-text-muted/10'}`}
         />
       )}
-      {actions && <div className="relative z-20 p-4">{actions}</div>}
+      {actions && <div className="relative z-(--z-inner-actions) p-4">{actions}</div>}
       <div className="relative">
         <PropertyCardImage title={property.title} imageUrl={property.coverImageUrl} eager={eager} />
-        <div className="pointer-events-none absolute start-3 top-3">
+        <div className="pointer-events-none absolute z-(--z-inner-badge) start-3 top-3">
           <AvailabilityBadge isAvailable={property.isAvailable} />
         </div>
         {property.postingStatus && (
           <span
-            className={`pointer-events-none absolute end-3 top-3 rounded-md px-2 py-1 text-sm font-bold ${
+            className={`pointer-events-none absolute z-(--z-inner-badge) end-3 top-3 rounded-md px-2 py-1 text-sm font-bold ${
               {
                 PENDING: 'bg-warning-soft text-warning',
                 APPROVED: 'bg-success-soft text-success',

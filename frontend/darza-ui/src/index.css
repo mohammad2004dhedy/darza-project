@@ -3,6 +3,13 @@
 @import 'tailwindcss';
 
 :root {
+  --z-inner-overlay: 1;
+  --z-inner-badge: 2;
+  --z-inner-link: 3;
+  --z-inner-actions: 10;
+  --z-tabs: 30;
+  --z-navigation: 40;
+  --z-toast: 60;
   --color-photo-viewer: #101414;
   --color-primary: #17403f;
   --color-primary-hover: #0f2e2d;

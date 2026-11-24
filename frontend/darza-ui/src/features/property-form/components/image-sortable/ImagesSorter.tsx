@@ -83,7 +83,7 @@ function SortableImage({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={
         'relative overflow-hidden rounded-lg border border-border bg-background ' +
-        (isDragging ? 'z-10 opacity-60' : '')
+        (isDragging ? 'z-(--z-inner-actions) opacity-60' : '')
       }
       {...attributes}
       {...listeners}
