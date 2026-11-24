@@ -8,7 +8,7 @@ export function ContactBar({ property }: { property: PropertyDetailsResponse }) 
   return (
     <div
       aria-label="تواصل مع الناشر"
-      className="fixed inset-x-0 bottom-[calc(5rem+max(0px,env(safe-area-inset-bottom)-0.5rem))] z-20 flex gap-3 border-t border-border bg-surface p-3 md:bottom-0 lg:static lg:border-0 lg:p-0"
+      className="flex w-full flex-col gap-3 md:flex-row"
     >
       <WhatsAppButton phone={contact.phone} message={contact.message} />
       <CallButton phone={contact.phone} />

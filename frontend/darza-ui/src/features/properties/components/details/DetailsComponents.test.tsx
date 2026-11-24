@@ -183,3 +183,12 @@ it('isolates town and city in the shared muted location line', () => {
   ])
   expect(container.querySelector('bdi')?.closest('p')?.className).toContain('text-text-muted')
 })
+
+it('renders contact actions directly on the page, stacked on mobile and side by side from md', () => {
+  renderContact()
+  const contact = screen.getByLabelText('تواصل مع الناشر')
+  expect(contact.className).toBe('flex w-full flex-col gap-3 md:flex-row')
+  expect(contact.children).toHaveLength(2)
+  expect(screen.getByRole('link', { name: 'التواصل على واتساب' }).parentElement).toBe(contact)
+  expect(screen.getByRole('link', { name: 'الاتصال بالمعلن' }).parentElement).toBe(contact)
+})
