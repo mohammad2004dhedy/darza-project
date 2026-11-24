@@ -19,7 +19,7 @@ export function LocationSection({ title, empty, items, loading, error, retry, bu
     </div>
     {loading ? <Spinner /> : error ? <ErrorMessage onRetry={retry} /> : !items?.length ? <EmptyState title={empty} /> :
       <ul className="grid gap-3 sm:grid-cols-2">
-        {items.map(item => <li key={item.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-surface p-4">
+        {items.map(item => <li key={item.id} aria-current={selected === item.id ? 'true' : undefined} className={`flex min-w-0 items-center gap-2 rounded-lg border p-4 ${selected === item.id ? 'border-primary bg-primary/5' : 'border-border bg-surface'}`}>
           {onSelect ? <button disabled={busy} aria-pressed={selected === item.id} onClick={() => onSelect(item.id)} className={`min-w-0 flex-1 break-words text-start ${selected === item.id ? 'font-bold text-primary' : 'text-text'}`}>{item.name}</button> : <span className="min-w-0 flex-1 break-words">{item.name}</span>}
           <Button variant="outline" disabled={busy} aria-label={`تعديل ${item.name}`} onClick={() => onEdit(item)}><Pencil size={18} /></Button>
           <Button variant="danger" disabled={busy} aria-label={`حذف ${item.name}`} onClick={() => onDelete(item)}><Trash2 size={18} /></Button>
