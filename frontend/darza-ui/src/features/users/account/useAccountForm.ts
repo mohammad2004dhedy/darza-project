@@ -56,7 +56,26 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     value: cityId,
   }
   const town = { ...form.register('townId'), value: townId }
-  const submit = form.handleSubmit(async (values) => {
+
+  const removeAvatar = async () => {
+    try {
+      await deleteProfileImage()
+      setAvatar({ kind: 'unchanged' })
+      await cache.invalidateQueries({ queryKey: ['users'] })
+      showToast('تم حفظ الحساب')
+      navigate(-1)
+    } catch {
+      showToast('تم حفظ بياناتك، لكن تعذر حذف الصورة', {
+        label: 'إعادة المحاولة',
+        onClick: () => {
+          if (submitting.current) return
+          submitting.current = true
+          void removeAvatar().finally(() => { submitting.current = false })
+        },
+      })
+    }
+  }
+  const submit = async (values: AccountSubmission) => {
     if (uploading) return
     setFormError(null)
     try {
@@ -84,24 +103,6 @@ export function useAccountForm(profile: MyProfileUserResponse) {
         cache.invalidateQueries({ queryKey: ['properties'] }),
       ])
       if (avatar.kind === 'removed') {
-        const removeAvatar = async () => {
-          try {
-            await deleteProfileImage()
-            setAvatar({ kind: 'unchanged' })
-            await cache.invalidateQueries({ queryKey: ['users'] })
-            showToast('تم حفظ الحساب')
-            navigate(-1)
-          } catch {
-            showToast('تم حفظ بياناتك، لكن تعذر حذف الصورة', {
-              label: 'إعادة المحاولة',
-              onClick: () => {
-                if (submitting.current) return
-                submitting.current = true
-                void removeAvatar().finally(() => { submitting.current = false })
-              },
-            })
-          }
-        }
         await removeAvatar()
         return
       }
@@ -116,13 +117,13 @@ export function useAccountForm(profile: MyProfileUserResponse) {
         ),
       )
     }
-  })
+  }
   const onSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
     if (submitting.current || uploading) return
     submitting.current = true
     try {
-      await submit(event)
+      await form.handleSubmit(submit)(event)
     } finally {
       submitting.current = false
     }
