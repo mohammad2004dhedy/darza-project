@@ -17,7 +17,7 @@ export function formatPublishedAt(iso?: string, now = Date.now()) {
   ]
   const unit = units.find(([, duration]) => seconds >= duration)
   return {
-    relative: unit ? relativeFormat.format(-Math.floor(seconds / unit[1]), unit[0]) : 'الآن',
+    relative: unit ? relativeFormat.format(-Math.floor(seconds / unit[1]), unit[0]).replace(/^قبل /, 'منذ ') : 'الآن',
     date: longFormat.format(timestamp),
     full: fullFormat.format(timestamp),
   }
