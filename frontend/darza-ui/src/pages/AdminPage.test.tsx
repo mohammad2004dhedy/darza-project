@@ -103,3 +103,9 @@ it('updates the URL when tabs change and restores the selected tab on back', asy
   expect(screen.getByRole('tab', { name: 'المرفوضة' }).getAttribute('aria-selected')).toBe('true')
   expect(await screen.findByText('لا توجد إعلانات مرفوضة')).toBeTruthy()
 })
+
+it('keeps the moderation tabs inset from the container edges', async () => {
+  setup()
+  await screen.findByText('لا توجد إعلانات قيد المراجعة')
+  expect(screen.getByRole('tablist').classList.contains('px-3')).toBe(true)
+})
