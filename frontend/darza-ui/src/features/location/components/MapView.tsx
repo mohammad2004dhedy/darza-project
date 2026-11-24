@@ -6,6 +6,7 @@ import { Spinner } from '../../../components/ui/Spinner'
 type MapViewProps = {
   lat?: number
   lng?: number
+  mapsUrl?: string
   interactive: boolean
   onChange?: (lat: number, lng: number) => void
 }
@@ -146,6 +147,10 @@ export function MapView(props: MapViewProps) {
 
   return (
     <div className="relative isolate h-full overflow-hidden rounded-lg bg-background">
+      {props.mapsUrl && (
+        <a href={props.mapsUrl} target="_blank" rel="noopener noreferrer"
+          aria-label="افتح الموقع في خرائط جوجل" className="absolute inset-0 z-[500]" />
+      )}
       <div
         ref={container}
         role="region"
