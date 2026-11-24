@@ -166,7 +166,7 @@ it.each(['approve', 'reject'])('invalidates every embedded property cache after 
   keys.forEach(key => client.setQueryData(key, []))
   fireEvent.click(screen.getByRole('button', { name: action === 'approve' ? 'موافقة' : 'رفض' }))
   if (action === 'reject') fireEvent.change(screen.getByLabelText('سبب الرفض'), { target: { value: 'سبب' } })
-  fireEvent.click(screen.getByRole('button', { name: action === 'approve' ? 'تأكيد الموافقة' : 'تأكيد الرفض' }))
+  fireEvent.click(screen.getByRole('button', { name: action === 'approve' ? 'تأكيد الموافقة' : 'إرسال' }))
   await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
   keys.forEach(key => expect(client.getQueryState(key)?.isInvalidated).toBe(true))
   expect(client.getQueryState(['unrelated'])?.isInvalidated).toBe(false)

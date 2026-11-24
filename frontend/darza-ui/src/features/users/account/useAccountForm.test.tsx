@@ -121,7 +121,7 @@ it('renders backend errors on the form and cancels local avatar removal', async 
   fireEvent.click(screen.getByRole('button', { name: 'حفظ' }))
   await screen.findByText('الاسم غير صالح')
   expect(saveAccount).toHaveBeenCalledWith(expect.anything(), { kind: 'unchanged' })
-  expect(deleteProfileImage).toHaveBeenCalledTimes(1)
+  expect(deleteProfileImage).not.toHaveBeenCalled()
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'إلغاء' }).hasAttribute('disabled')).toBe(false),
   )
