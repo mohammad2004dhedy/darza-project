@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApiError } from './api/client'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './components/ui/ToastProvider'
+import { OverlayRouteCleanup } from './components/ui/OverlayRouteCleanup'
 import { AppRoutes } from './routes/AppRoutes'
 
 const queryClient = new QueryClient({
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <BrowserRouter>
+      <OverlayRouteCleanup />
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <AuthProvider>

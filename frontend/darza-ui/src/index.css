@@ -72,6 +72,18 @@
     cursor: not-allowed;
   }
 
+  html {
+    scrollbar-gutter: stable;
+  }
+  html:has(dialog[open]),
+  html.scroll-locked {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
+  dialog,
+  dialog * {
+    overscroll-behavior: contain;
+  }
   body {
     margin: 0;
     background: var(--color-background);
