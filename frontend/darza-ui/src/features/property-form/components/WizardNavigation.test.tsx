@@ -122,6 +122,7 @@ async function fillRequired(state: ReturnType<typeof setup>) {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
 })
 afterEach(() => {
@@ -156,7 +157,7 @@ describe('create wizard navigation', () => {
     await expectStep(3)
   })
 
-  it('allows previous and visited stations after an earlier field becomes invalid', async () => {
+  it('blocks visited stations after an earlier required field becomes invalid', async () => {
     const state = setup()
     await fillRequired(state)
     fireEvent.click(stepButton(3))
@@ -165,11 +166,9 @@ describe('create wizard navigation', () => {
     expect(stepButton(0).disabled).toBe(false)
     fireEvent.click(stepButton(0))
     await expectStep(0)
-    expect(stepButton(3).disabled).toBe(false)
+    expect(stepButton(3).disabled).toBe(true)
     fireEvent.click(stepButton(3))
-    await expectStep(3)
-    fireEvent.click(screen.getByRole('button', { name: 'السابق' }))
-    await expectStep(2)
+    await expectStep(0)
   })
 
   it('requires all required fields for review even after review has been visited', async () => {
@@ -263,7 +262,7 @@ describe('return to review', () => {
     expect(mocks.uploadAll).not.toHaveBeenCalled()
   })
 
-  it('returns after validating only the edited step even when another step is invalid', async () => {
+  it('redirects to the first incomplete step instead of returning to invalid review', async () => {
     const state = setup()
     await fillRequired(state)
     fireEvent.click(stepButton(6))
@@ -275,14 +274,14 @@ describe('return to review', () => {
       target: { value: '500' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'حفظ والعودة للمراجعة' }))
-    await expectStep(6)
+    await expectStep(5)
     expect(params().has('from')).toBe(false)
     expect(state.wizard.form.getValues('title')).toBe('')
     expect(state.wizard.form.getValues('price')).toBe('500')
     expect(mocks.uploadAll).not.toHaveBeenCalled()
   })
 
-  it('keeps review clickable with invalid data and clears the marker when using the stepper', async () => {
+  it('disables invalid review and clears the marker when using the stepper', async () => {
     const state = setup()
     await fillRequired(state)
     fireEvent.click(stepButton(6))
@@ -290,11 +289,8 @@ describe('return to review', () => {
     fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
     await expectStep(1)
     fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '' } })
-    expect(stepButton(6).disabled).toBe(false)
+    expect(stepButton(6).disabled).toBe(true)
     fireEvent.click(stepButton(6))
-    await expectStep(6)
-    expect(params().has('from')).toBe(false)
-    fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
     await expectStep(1)
     fireEvent.click(stepButton(0))
     await expectStep(0)
@@ -302,4 +298,29 @@ describe('return to review', () => {
     expect(screen.getByRole('button', { name: 'التالي' })).toBeTruthy()
     expect(stepButton(6).disabled).toBe(true)
   })
+})
+
+
+it.each(['/wizard?step=7', '/wizard?step=5&from=review', '/wizard?from=review'])(
+  'guards direct entry and refreshed URLs: %s', async (url) => {
+    setup({ url })
+    await expectStep(0)
+    expect(params().has('from')).toBe(false)
+    expect(screen.queryByRole('button', { name: 'حفظ والعودة للمراجعة' })).toBeNull()
+  },
+)
+
+
+it.each(['stepper', 'السابق'])('leaves review editing for step 1 atomically via %s', async (action) => {
+  const state = setup()
+  await fillRequired(state)
+  fireEvent.click(stepButton(6))
+  await expectStep(6)
+  fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
+  await expectStep(1)
+  expect(params().get('from')).toBe('review')
+  fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '' } })
+  fireEvent.click(action === 'stepper' ? stepButton(0) : screen.getByRole('button', { name: action }))
+  await expectStep(0)
+  expect(params().has('from')).toBe(false)
 })

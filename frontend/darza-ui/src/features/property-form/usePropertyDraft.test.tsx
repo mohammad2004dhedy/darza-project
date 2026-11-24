@@ -6,7 +6,7 @@ import { usePropertyDraft } from './usePropertyDraft'
 import { DraftStorage } from './DraftStorage'
 import { defaultValues, type FormValues } from './schema'
 
-afterEach(() => { cleanup(); localStorage.clear(); vi.useRealTimers() })
+afterEach(() => { cleanup(); localStorage.clear(); vi.useRealTimers(); vi.restoreAllMocks() })
 function setup(userId: number | null = 7) {
   return renderHook(({ step }) => {
     const form = useForm<FormValues>({ defaultValues })
@@ -46,5 +46,47 @@ it('restarts restored drafts and clears the image reminder', () => {
   expect(result.current.form.getValues('title')).toBe('')
   expect(result.current.draft.restored).toBe(false)
   expect(result.current.draft.missingImages).toBe(false)
+  expect(DraftStorage.read(7)).toBeNull()
+})
+
+it.each(['unmount', 'pagehide', 'hidden'] as const)('flushes the latest pending fields on %s', (event) => {
+  vi.useFakeTimers()
+  const { result, rerender, unmount } = setup()
+  rerender({ step: 3 })
+  act(() => {
+    result.current.form.setValue('title', 'أحدث عنوان')
+    result.current.form.setValue('description', 'أحدث وصف')
+    vi.advanceTimersByTime(499)
+  })
+  if (event === 'unmount') unmount()
+  else act(() => {
+    if (event === 'pagehide') window.dispatchEvent(new Event('pagehide'))
+    else {
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+      document.dispatchEvent(new Event('visibilitychange'))
+    }
+  })
+  expect(DraftStorage.read(7)).toMatchObject({ step: 3, values: { title: 'أحدث عنوان', description: 'أحدث وصف', hadImages: true } })
+})
+it('does not flush when the page remains visible', () => {
+  vi.useFakeTimers()
+  const { result } = setup()
+  act(() => result.current.form.setValue('title', 'جديد'))
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible')
+  act(() => document.dispatchEvent(new Event('visibilitychange')))
+  expect(DraftStorage.read(7)).toBeNull()
+})
+it.each([7, null])('does not resurrect cleared drafts or save edit-mode lifecycle changes (user %s)', (userId) => {
+  vi.useFakeTimers()
+  const { result, unmount } = setup(userId)
+  act(() => {
+    result.current.form.setValue('title', 'غير محفوظ')
+    if (userId !== null) result.current.draft.clear()
+    window.dispatchEvent(new Event('pagehide'))
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  unmount()
+  act(() => vi.advanceTimersByTime(500))
   expect(DraftStorage.read(7)).toBeNull()
 })

@@ -465,6 +465,13 @@ export function PropertyWizard({ wizard }: StepProps) {
         )}
       </div>
       <ConfirmModal
+        open={wizard.confirmingBack}
+        title="تغييرات غير محفوظة"
+        message="لديك تغييرات غير محفوظة، هل تريد المغادرة؟"
+        onCancel={wizard.cancelBack}
+        onConfirm={wizard.confirmBack}
+      />
+      <ConfirmModal
         open={wizard.confirming}
         title="حفظ التعديلات"
         message="قد يعود الإعلان للمراجعة بعد حفظ التعديلات ولن يظهر للعامة حتى الموافقة. هل تريد المتابعة؟"
