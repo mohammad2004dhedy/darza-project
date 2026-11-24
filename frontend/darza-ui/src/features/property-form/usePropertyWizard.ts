@@ -236,7 +236,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
           try {
             const response = await mutation.mutateAsync(values)
             setBaseline(values)
-      propertyDraft.clear()
+            propertyDraft.clear()
             form.reset(values)
             initialImages.current = uploader.items.map((item) => item.id).join(',')
             setConfirming(false)

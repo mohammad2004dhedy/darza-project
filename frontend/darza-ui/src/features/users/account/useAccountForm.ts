@@ -57,6 +57,13 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     value: cityId,
   }
   const town = { ...form.register('townId'), value: townId }
+  const currentValues = useWatch({ control: form.control })
+  const [baseline, setBaseline] = useState(() => form.getValues())
+  const unsaved = avatar.kind !== 'unchanged' ||
+    (Object.keys(baseline) as (keyof AccountValues)[]).some(
+      (key) => currentValues[key] !== baseline[key],
+    )
+  const leave = useUnsavedChanges(unsaved)
 
   const removeAvatar = async () => {
     try {
