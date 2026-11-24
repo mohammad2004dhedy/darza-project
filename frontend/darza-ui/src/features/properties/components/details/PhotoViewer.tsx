@@ -2,7 +2,8 @@ import { ImageWithPlaceholder } from '../../../../components/ui/ImageWithPlaceho
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useEffect } from 'react'
 import type { ImageResponse } from '../../../../types/api'
-import { useGallery, usePhotoViewer } from '../../useGallery'
+import { usePhotoViewer } from '../../useGallery'
+import { usePropertyGallery } from '../../usePropertyGallery'
 import { GalleryCounterBadge } from './GalleryCounterBadge'
 import { GalleryThumbnails } from './GalleryThumbnails'
 
@@ -15,12 +16,12 @@ interface Props {
 
 export function PhotoViewer({ images, title, initialIndex, onClose }: Props) {
   const {
-    index: currentIndex,
+    activeIndex: currentIndex,
     track,
     goTo,
     onScroll,
     onKeyDown,
-  } = useGallery(images.length, initialIndex)
+  } = usePropertyGallery(images.length, initialIndex)
   const { dialog, close } = usePhotoViewer(onClose)
   useEffect(() => {
     goTo(initialIndex, 'instant')

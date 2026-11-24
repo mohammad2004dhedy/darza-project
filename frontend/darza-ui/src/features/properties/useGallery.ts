@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 let pendingHistoryBack: Promise<void> | undefined
 
@@ -12,48 +12,6 @@ export function useDesktopGallery() {
     return () => query.removeEventListener('change', update)
   }, [])
   return desktop
-}
-
-export function useGallery(count: number, initialIndex = 0) {
-  const [index, setIndex] = useState(initialIndex)
-  const track = useRef<HTMLDivElement>(null)
-  const goTo = useCallback(
-    (next: number, behavior: ScrollBehavior = 'smooth') => {
-      const current = Math.max(0, Math.min(count - 1, next))
-      const element = track.current
-      const slide = element?.children[current] as HTMLElement | undefined
-      if (!element || !slide) return
-      element.scrollTo({
-        left: slide.offsetLeft - (element.children[0] as HTMLElement).offsetLeft,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'instant'
-          : behavior,
-      })
-      setIndex(current)
-    },
-    [count],
-  )
-  const onScroll = () => {
-    const element = track.current
-    if (!element || !element.children.length) return
-    const origin = (element.children[0] as HTMLElement).offsetLeft
-    let nearest = 0
-    let distance = Infinity
-    Array.from(element.children).forEach((child, position) => {
-      const delta = Math.abs((child as HTMLElement).offsetLeft - origin - element.scrollLeft)
-      if (delta < distance) {
-        distance = delta
-        nearest = position
-      }
-    })
-    setIndex(nearest)
-  }
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-    event.preventDefault()
-    goTo(index + (event.key === 'ArrowRight' ? 1 : -1))
-  }
-  return { index, track, goTo, onScroll, onKeyDown }
 }
 
 export function usePhotoViewer(onClose: () => void) {
