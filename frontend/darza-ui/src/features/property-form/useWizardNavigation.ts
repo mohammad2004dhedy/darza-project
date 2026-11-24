@@ -74,17 +74,27 @@ export function useWizardNavigation(
     }
   })
 
+  async function validate(fields: FieldPath<FormValues>[]) {
+    const valid = await form.trigger(fields, { shouldFocus: true })
+    if (!valid) {
+      const first = fields.find((field) => form.getFieldState(field).invalid)
+      if (first) document.getElementsByName(first).item(0)?.focus()
+    }
+    return valid
+  }
+
   async function go(index: number, fromReview = false) {
     if (!Number.isInteger(index) || index < 0 || index > 6) return
     if (index === step) return
-    if (!(await form.trigger(stepFields[step], { shouldFocus: true }))) return
+    if (!(await validate(stepFields[step]))) return
     if (step === 4 && !imagesReady) {
       form.setError('imagePaths', { type: 'validate', message: 'انتظر تجهيز الصور قبل المتابعة' }, { shouldFocus: true })
+      document.getElementsByName('imagePaths').item(0)?.focus()
       return
     }
     const fields = index === 6 ? stepFields.slice(0, 6).flat()
       : index > step ? stepFields.slice(0, index).flat() : stepFields[step]
-    if (!(await form.trigger(fields, { shouldFocus: true }))) return
+    if (!(await validate(fields))) return
     if (index > step && valid.slice(0, index).some((value) => !value)) return
     goToStep(index, { keepReview: fromReview })
   }

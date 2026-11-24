@@ -48,6 +48,7 @@ it('validates the first step and does not render submit before review', async ()
   setup()
   fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
   await screen.findByText('اختر نوع العقار')
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'شقة' }))
   expect(screen.queryByRole('button', { name: 'إرسال الإعلان' })).toBeNull()
 })
 
