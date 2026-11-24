@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useWatch, type FieldPath, type UseFormReturn } from 'react-hook-form'
 import { useLocation, useSearchParams } from 'react-router'
 import { formSchema, type FormValues } from './schema'
@@ -21,7 +21,8 @@ export function useWizardNavigation(
 ) {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
-  const reviewSession = useRef(false)
+  const [navigationSession] = useState(() => crypto.randomUUID())
+  const ownNavigation = location.state?.wizardNavigationSession === navigationSession
   const values = useWatch({ control: form.control })
   const result = formSchema.safeParse(values)
   const valid = stepFields.map(
@@ -38,36 +39,39 @@ export function useWizardNavigation(
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
     return editMode || valid.slice(0, index).every(Boolean)
   }
-  const blocked = !canVisit(requested) || (!editMode && returningToReview && !reviewSession.current && firstInvalid >= 0)
-  const step = blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : requested
-  const discardReview = !editMode && (blocked || (returningToReview && !reviewSession.current && firstInvalid >= 0))
+  function destination(index: number, keepReview: boolean, external: boolean) {
+    const blocked = !canVisit(index) || (
+      external && !editMode && keepReview && firstInvalid >= 0
+    )
+    return {
+      index: blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : index,
+      keepReview: keepReview && !blocked,
+    }
+  }
+  const resolved = destination(requested, returningToReview, !ownNavigation)
+  const step = resolved.index
+
+  function goToStep(index: number, { keepReview = false, replace = false, external = false } = {}) {
+    const target = destination(index, keepReview, external)
+    const next = new URLSearchParams(params)
+    next.set('step', String(target.index + 1))
+    if (target.keepReview) next.set('from', 'review')
+    else next.delete('from')
+    setParams(next, {
+      replace,
+      state: { ...location.state, wizardNavigationSession: navigationSession },
+    })
+  }
 
   useEffect(() => {
-    if (params.get('step') !== String(step + 1) || discardReview) {
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          next.set('step', String(step + 1))
-          if (discardReview) next.delete('from')
-          return next
-        },
-        { replace: true },
-      )
+    if (ownNavigation) return
+    if (params.get('step') !== String(step + 1) || returningToReview !== resolved.keepReview) {
+      goToStep(requested, { keepReview: returningToReview, replace: true, external: true })
     }
-  }, [step, params, setParams, discardReview])
+  })
 
   function go(index: number, fromReview = false) {
-    reviewSession.current = fromReview || (index === 6 && returningToReview)
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current)
-        next.set('step', String(index + 1))
-        if (fromReview) next.set('from', 'review')
-        else next.delete('from')
-        return next
-      },
-      { state: { ...location.state, wizardReviewAccess: fromReview || (index === 6 && returningToReview) } },
-    )
+    goToStep(index, { keepReview: fromReview })
   }
 
   return {

@@ -309,3 +309,18 @@ it.each(['/wizard?step=7', '/wizard?step=5&from=review', '/wizard?from=review'])
     expect(screen.queryByRole('button', { name: 'حفظ والعودة للمراجعة' })).toBeNull()
   },
 )
+
+
+it.each(['stepper', 'السابق'])('leaves review editing for step 1 atomically via %s', async (action) => {
+  const state = setup()
+  await fillRequired(state)
+  fireEvent.click(stepButton(6))
+  await expectStep(6)
+  fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
+  await expectStep(1)
+  expect(params().get('from')).toBe('review')
+  fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '' } })
+  fireEvent.click(action === 'stepper' ? stepButton(0) : screen.getByRole('button', { name: action }))
+  await expectStep(0)
+  expect(params().has('from')).toBe(false)
+})
