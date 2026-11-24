@@ -17,7 +17,7 @@ function Harness() {
   return <output data-testid="step">{navigation.step}:{location.search}:{location.key}</output>
 }
 
-it.each(['?step=7&from=review&source=test', '?step=4&from=review&source=test'])(
+it.each(['?step=7&from=review&source=test', '?step=4&from=review&source=test', '?from=review&source=test'])(
   'replaces direct and refreshed URLs with the first incomplete step: %s', async (search) => {
     const mount = () => render(
       <MemoryRouter initialEntries={[{ pathname: '/properties/new', search, key: 'entry', state: { wizardReviewAccess: true } }]}>

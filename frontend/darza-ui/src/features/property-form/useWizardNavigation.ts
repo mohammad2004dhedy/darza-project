@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useWatch, type FieldPath, type UseFormReturn } from 'react-hook-form'
 import { useLocation, useSearchParams } from 'react-router'
 import { formSchema, type FormValues } from './schema'
@@ -21,6 +21,7 @@ export function useWizardNavigation(
 ) {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
+  const reviewSession = useRef(false)
   const values = useWatch({ control: form.control })
   const result = formSchema.safeParse(values)
   const valid = stepFields.map(
@@ -37,9 +38,9 @@ export function useWizardNavigation(
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
     return editMode || valid.slice(0, index).every(Boolean)
   }
-  const blocked = !canVisit(requested)
+  const blocked = !canVisit(requested) || (!editMode && returningToReview && !reviewSession.current && firstInvalid >= 0)
   const step = blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : requested
-  const discardReview = !editMode && (blocked || (returningToReview && !location.state?.wizardReviewAccess && firstInvalid >= 0))
+  const discardReview = !editMode && (blocked || (returningToReview && !reviewSession.current && firstInvalid >= 0))
 
   useEffect(() => {
     if (params.get('step') !== String(step + 1) || discardReview) {
@@ -56,6 +57,7 @@ export function useWizardNavigation(
   }, [step, params, setParams, discardReview])
 
   function go(index: number, fromReview = false) {
+    reviewSession.current = fromReview || (index === 6 && returningToReview)
     setParams(
       (current) => {
         const next = new URLSearchParams(current)

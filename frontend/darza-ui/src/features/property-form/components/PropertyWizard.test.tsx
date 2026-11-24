@@ -12,13 +12,19 @@ vi.mock('../../location/hooks', () => ({
   useCities: () => ({ data: [{ id: 1, name: 'رام الله' }], isPending: false }),
   useTowns: () => ({ data: [{ id: 2, name: 'البيرة' }], isPending: false }),
 }))
-afterEach(cleanup)
+afterEach(() => { cleanup(); localStorage.clear() })
 
 let current: ReturnType<typeof usePropertyWizard>
 
-function setup() {
+function setup(review = false) {
   function Wizard() {
-    const wizard = usePropertyWizard()
+    const wizard = usePropertyWizard(review ? {
+      id: 9, title: 'إعلان تجريبي', propertyType: 'HOUSE', listingType: 'SELL',
+      price: 350, currency: 'ILS', isAvailable: true, postingStatus: 'APPROVED',
+      town: { cityId: 1, cityName: 'رام الله', townId: 2, townName: 'البيرة' },
+      user: { id: 7, displayName: 'مالك' },
+      images: [{ path: 'properties/7/a.webp', url: '/a.webp' }],
+    } : undefined)
     current = wizard
     return <PropertyWizard wizard={wizard} />
   }
@@ -109,7 +115,7 @@ it('requires rent period on the price step', async () => {
 })
 
 it('review includes named location and edit links for every section', () => {
-  setup()
+  setup(true)
   act(() => {
     current.form.setValue('cityId', '1')
     current.form.setValue('townId', '2')
@@ -117,7 +123,7 @@ it('review includes named location and edit links for every section', () => {
   })
   expect(screen.getByText('رام الله، البيرة')).toBeTruthy()
   expect(screen.getAllByRole('button', { name: /^تعديل / })).toHaveLength(6)
-  expect(screen.getByRole('button', { name: 'إرسال الإعلان' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'حفظ التعديلات' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
   expect(screen.getByText('الخطوة 2 من 7')).toBeTruthy()
 })
@@ -158,7 +164,7 @@ it('starts with an empty price, rejects it, and accepts an explicit zero', async
 })
 
 it('reviews only existing values, retains false and zero, and hides coordinate numbers', () => {
-  setup()
+  setup(true)
   act(() => {
     current.form.setValue('price', '0')
     current.form.setValue('currency', 'ILS')
