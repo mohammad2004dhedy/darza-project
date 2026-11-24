@@ -3,7 +3,7 @@ import { StrictMode } from 'react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, useNavigate } from 'react-router'
-import { readFileSync } from 'node:fs'
+import css from '../index.css?raw'
 import { useScrollLock } from './useScrollLock'
 import { OverlayRouteCleanup } from '../components/ui/OverlayRouteCleanup'
 
@@ -66,7 +66,6 @@ it('cancels and closes persistent native dialogs on navigation', () => {
 })
 
 it('shares the CSS lock and permanently reserves scrollbar space', () => {
-  const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8')
   expect(css).toMatch(/html\s*\{\s*scrollbar-gutter: stable;/)
   expect(css).toMatch(/html:has\(dialog\[open\]\),\s*html.scroll-locked\s*\{\s*overflow: hidden;\s*scrollbar-gutter: stable;/)
   expect(css).toMatch(/dialog,\s*dialog \*\s*\{\s*overscroll-behavior: contain;/)
