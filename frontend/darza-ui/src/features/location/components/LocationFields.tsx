@@ -5,8 +5,8 @@ import { TownSelect } from './TownSelect'
 
 interface LocationFieldsProps {
   cityId: string
-  city: UseFormRegisterReturn
-  town: UseFormRegisterReturn
+  city: UseFormRegisterReturn & { value?: string }
+  town: UseFormRegisterReturn & { value?: string }
   cityError?: string
   townError?: string
 }

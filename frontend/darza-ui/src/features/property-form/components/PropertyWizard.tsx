@@ -223,8 +223,8 @@ function LocationStep({ wizard }: StepProps) {
     <div className="space-y-5">
       <LocationFields
         cityId={form.watch('cityId')}
-        city={form.register('cityId')}
-        town={form.register('townId')}
+        city={{ ...form.register('cityId'), value: form.watch('cityId') }}
+        town={{ ...form.register('townId'), value: form.watch('townId') }}
         cityError={form.formState.errors.cityId?.message}
         townError={form.formState.errors.townId?.message}
       />
