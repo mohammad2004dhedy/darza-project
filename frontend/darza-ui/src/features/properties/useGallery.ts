@@ -29,8 +29,6 @@ export function usePhotoViewer(onClose: () => void) {
   useEffect(() => {
     const element = dialog.current!
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
     element.showModal()
     let active = true
     let owned = false
@@ -74,7 +72,6 @@ export function usePhotoViewer(onClose: () => void) {
       release()
       element.close()
       if (opener?.isConnected) opener.focus({ preventScroll: true })
-      document.body.style.overflow = overflow
     }
   }, [])
   return { dialog, close }
