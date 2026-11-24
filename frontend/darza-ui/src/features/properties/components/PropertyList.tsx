@@ -36,7 +36,14 @@ export function PropertyList({
     query.hasNextPage && !query.isFetching && !query.isError,
     loadNext,
   )
-  const properties = query.data?.pages.flatMap((page) => page.content) ?? []
+  const seen = new Set<number>()
+  const properties = (query.data?.pages.flatMap((page) => page.content) ?? []).filter(
+    (property) => {
+      if (seen.has(property.id)) return false
+      seen.add(property.id)
+      return true
+    },
+  )
 
   return (
     <>
