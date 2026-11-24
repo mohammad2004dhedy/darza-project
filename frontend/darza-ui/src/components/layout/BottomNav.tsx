@@ -1,19 +1,21 @@
 import { House, LogIn, Plus, UserRound, LayoutDashboard, type LucideIcon } from 'lucide-react'
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { useAuth } from '../../context/auth'
 interface NavItem {
   to: string
   label: string
+  active?: boolean
   icon: LucideIcon
 }
 const home: NavItem = { to: '/', label: 'الرئيسية', icon: House }
-function MobileNavItem({ to, label, icon: Icon }: NavItem) {
+function MobileNavItem({ to, label, icon: Icon, active }: NavItem) {
   return (
     <NavLink
       to={to}
+      aria-current={active ? 'page' : undefined}
       end
       className={({ isActive }) =>
-        `flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors ${isActive ? 'bg-background font-bold text-primary' : 'text-text-muted hover:text-primary'}`
+        `flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs transition-colors ${(active ?? isActive) ? 'bg-background font-bold text-primary' : 'text-text-muted hover:text-primary'}`
       }
     >
       <Icon size={20} aria-hidden="true" />
@@ -22,12 +24,13 @@ function MobileNavItem({ to, label, icon: Icon }: NavItem) {
   )
 }
 export function BottomNav() {
-  const { isAuthenticated, isAdmin } = useAuth()
+  const { isAuthenticated, isAdmin, userId } = useAuth()
+  const { pathname } = useLocation()
   const items: NavItem[] = isAuthenticated
     ? [
         home,
         { to: '/properties/new', label: 'أضف عقار', icon: Plus },
-        { to: '/profile', label: 'حسابي', icon: UserRound },
+        { to: '/profile', label: 'حسابي', icon: UserRound, active: pathname === '/profile' || (userId !== null && pathname === `/users/${userId}`) || pathname.startsWith('/settings') },
       ]
     : [home, { to: '/login', label: 'تسجيل الدخول', icon: LogIn }]
   if (isAdmin) items.push({ to: '/admin', label: 'لوحة الإدارة', icon: LayoutDashboard })
