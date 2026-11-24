@@ -50,8 +50,11 @@ it('selects the saved city and town when options load asynchronously and clears 
       { id: 1, name: 'القدس' },
       { id: 2, name: 'رام الله' },
     ])
-    townsReady([{ id: 1, name: 'البلدة القديمة' }])
   })
+  await waitFor(() => expect(city.value).toBe('1'))
+  expect(locationApi.getTowns).toHaveBeenCalledWith(1)
+  expect(town.disabled).toBe(true)
+  await act(async () => { townsReady([{ id: 1, name: 'البلدة القديمة' }]) })
   await waitFor(() => {
     expect(city.value).toBe('1')
     expect(town.value).toBe('1')
