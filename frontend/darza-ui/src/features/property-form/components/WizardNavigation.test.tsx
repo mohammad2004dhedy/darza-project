@@ -132,10 +132,10 @@ afterEach(() => {
 })
 
 describe('create wizard navigation', () => {
-  it('disables forward stations until their required predecessors are valid', async () => {
+  it('validates forward station clicks until their required predecessors are valid', async () => {
     const state = setup()
     await expectStep(0)
-    for (let index = 1; index < 7; index++) expect(stepButton(index).disabled).toBe(true)
+    for (let index = 1; index < 7; index++) expect(stepButton(index).disabled).toBe(false)
     await act(async () => state.wizard.setStep(3))
     await expectStep(0)
 
@@ -144,7 +144,7 @@ describe('create wizard navigation', () => {
       state.wizard.form.setValue('listingType', 'SELL')
     })
     expect(stepButton(1).disabled).toBe(false)
-    expect(stepButton(2).disabled).toBe(true)
+    expect(stepButton(2).disabled).toBe(false)
     fireEvent.click(stepButton(1))
     await expectStep(1)
     await act(async () => {
@@ -152,7 +152,7 @@ describe('create wizard navigation', () => {
       state.wizard.form.setValue('currency', 'ILS')
     })
     expect(stepButton(3).disabled).toBe(false)
-    expect(stepButton(4).disabled).toBe(true)
+    expect(stepButton(4).disabled).toBe(false)
     fireEvent.click(stepButton(3))
     await expectStep(3)
   })
@@ -166,7 +166,7 @@ describe('create wizard navigation', () => {
     expect(stepButton(0).disabled).toBe(false)
     fireEvent.click(stepButton(0))
     await expectStep(0)
-    expect(stepButton(3).disabled).toBe(true)
+    expect(stepButton(3).disabled).toBe(false)
     fireEvent.click(stepButton(3))
     await expectStep(0)
   })
@@ -182,7 +182,7 @@ describe('create wizard navigation', () => {
     fireEvent.change(screen.getByRole('textbox', { name: /عنوان الإعلان/ }), {
       target: { value: '' },
     })
-    expect(stepButton(6).disabled).toBe(true)
+    expect(stepButton(6).disabled).toBe(false)
     await act(async () => state.wizard.setStep(6))
     await expectStep(5)
   })
@@ -209,13 +209,16 @@ describe('edit wizard navigation', () => {
     fireEvent.click(stepButton(0))
     await expectStep(0)
     fireEvent.click(stepButton(6))
+    await expectStep(0)
+    await act(async () => state.wizard.form.setValue('price', '350'))
+    fireEvent.click(stepButton(6))
     await expectStep(6)
     fireEvent.click(stepButton(5))
     await expectStep(5)
     expect(screen.getByRole<HTMLInputElement>('textbox', { name: /عنوان الإعلان/ }).value).toBe(
       'عنوان معدل',
     )
-    expect(state.wizard.form.getValues('price')).toBe('')
+    expect(state.wizard.form.getValues('price')).toBe('350')
     expect(state.wizard.uploader.items).toHaveLength(1)
   })
 
@@ -262,7 +265,7 @@ describe('return to review', () => {
     expect(mocks.uploadAll).not.toHaveBeenCalled()
   })
 
-  it('redirects to the first incomplete step instead of returning to invalid review', async () => {
+  it('stays on the current step instead of returning to invalid review', async () => {
     const state = setup()
     await fillRequired(state)
     fireEvent.click(stepButton(6))
@@ -274,14 +277,14 @@ describe('return to review', () => {
       target: { value: '500' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'حفظ والعودة للمراجعة' }))
-    await expectStep(5)
-    expect(params().has('from')).toBe(false)
+    await expectStep(1)
+    expect(params().get('from')).toBe('review')
     expect(state.wizard.form.getValues('title')).toBe('')
     expect(state.wizard.form.getValues('price')).toBe('500')
     expect(mocks.uploadAll).not.toHaveBeenCalled()
   })
 
-  it('disables invalid review and clears the marker when using the stepper', async () => {
+  it('blocks invalid review and preserves the marker until the current step is fixed', async () => {
     const state = setup()
     await fillRequired(state)
     fireEvent.click(stepButton(6))
@@ -289,14 +292,18 @@ describe('return to review', () => {
     fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
     await expectStep(1)
     fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '' } })
-    expect(stepButton(6).disabled).toBe(true)
+    expect(stepButton(6).disabled).toBe(false)
     fireEvent.click(stepButton(6))
     await expectStep(1)
+    fireEvent.click(stepButton(0))
+    await expectStep(1)
+    expect(params().get('from')).toBe('review')
+    fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '500' } })
     fireEvent.click(stepButton(0))
     await expectStep(0)
     expect(params().has('from')).toBe(false)
     expect(screen.getByRole('button', { name: 'التالي' })).toBeTruthy()
-    expect(stepButton(6).disabled).toBe(true)
+    expect(stepButton(6).disabled).toBe(false)
   })
 })
 
@@ -321,6 +328,7 @@ it.each(['stepper', 'السابق'])('leaves review editing for step 1 atomicall
   expect(params().get('from')).toBe('review')
   fireEvent.change(screen.getByRole('textbox', { name: /السعر/ }), { target: { value: '' } })
   fireEvent.click(action === 'stepper' ? stepButton(0) : screen.getByRole('button', { name: action }))
-  await expectStep(0)
-  expect(params().has('from')).toBe(false)
+  await expectStep(action === 'stepper' ? 1 : 0)
+  expect(params().has('from')).toBe(action === 'stepper')
+  expect(state.wizard.form.getValues('price')).toBe('')
 })

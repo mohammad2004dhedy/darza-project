@@ -48,6 +48,7 @@ it('validates the first step and does not render submit before review', async ()
   setup()
   fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
   await screen.findByText('اختر نوع العقار')
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'شقة' }))
   expect(screen.queryByRole('button', { name: 'إرسال الإعلان' })).toBeNull()
 })
 
@@ -114,18 +115,18 @@ it('requires rent period on the price step', async () => {
   await screen.findByText('اختر فترة الإيجار', { selector: 'p' })
 })
 
-it('review includes named location and edit links for every section', () => {
+it('review includes named location and edit links for every section', async () => {
   setup(true)
   act(() => {
     current.form.setValue('cityId', '1')
     current.form.setValue('townId', '2')
-    current.editStep(6)
   })
+  await act(async () => current.editStep(6))
   expect(screen.getByText('رام الله، البيرة')).toBeTruthy()
   expect(screen.getAllByRole('button', { name: /^تعديل / })).toHaveLength(6)
   expect(screen.getByRole('button', { name: 'حفظ التعديلات' })).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'تعديل السعر' }))
-  expect(screen.getByText('الخطوة 2 من 7')).toBeTruthy()
+  await screen.findByText('الخطوة 2 من 7')
 })
 
 it('uses rent-only native radio chips and preserves the selected period', async () => {
@@ -163,7 +164,7 @@ it('starts with an empty price, rejects it, and accepts an explicit zero', async
   await screen.findByLabelText('المساحة (م²)')
 })
 
-it('reviews only existing values, retains false and zero, and hides coordinate numbers', () => {
+it('reviews only existing values, retains false and zero, and hides coordinate numbers', async () => {
   setup(true)
   act(() => {
     current.form.setValue('price', '0')
@@ -172,8 +173,8 @@ it('reviews only existing values, retains false and zero, and hides coordinate n
     current.form.setValue('furnished', 'false')
     current.form.setValue('latitude', '31.123456')
     current.form.setValue('longitude', '35.123456')
-    current.editStep(6)
   })
+  await act(async () => current.editStep(6))
   expect(screen.getByText('السعر عند التواصل')).toBeTruthy()
   expect(screen.getByText('تم تحديد الموقع على الخريطة')).toBeTruthy()
   expect(screen.getByText('الغرف')).toBeTruthy()

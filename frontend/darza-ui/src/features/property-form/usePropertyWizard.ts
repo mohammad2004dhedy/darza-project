@@ -120,15 +120,12 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
 
   async function next() {
     if (locked.current || step >= 6) return
-    if (step === 4 && !imagesReady()) return
-    if (await form.trigger(stepFields[step], { shouldFocus: true })) {
-      setStep(navigation.returningToReview ? 6 : step + 1)
-    }
+    await setStep(navigation.returningToReview ? 6 : step + 1)
   }
 
   function back() {
     if (locked.current) return
-    leave.requestLeave(() => navigation.setStep(Math.max(0, step - 1)))
+    navigation.setStep(Math.max(0, step - 1))
   }
 
   function registerNumber(name: NumberField) {
@@ -282,7 +279,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     },
     ...navigation,
     setStep: (index: number) => {
-      if (!locked.current) navigation.setStep(index)
+      if (!locked.current) return navigation.go(index)
     },
     next,
     back,

@@ -40,11 +40,13 @@ const optionalBooleanOptions = [
 ]
 
 function ChoiceCard({
+  name,
   selected,
   disabled,
   children,
   onClick,
 }: {
+  name: string
   selected: boolean
   disabled?: boolean
   children: ReactNode
@@ -52,6 +54,7 @@ function ChoiceCard({
 }) {
   return (
     <button
+      name={name}
       type="button"
       aria-pressed={selected}
       disabled={disabled}
@@ -76,6 +79,7 @@ function TypeStep({ wizard }: StepProps) {
             const Icon = propertyIcons[type]
             return (
               <ChoiceCard
+                name="propertyType"
                 key={type}
                 selected={values.propertyType === type}
                 onClick={() =>
@@ -98,6 +102,7 @@ function TypeStep({ wizard }: StepProps) {
         <legend className="mb-3 font-semibold">نوع الإعلان</legend>
         <div className="grid grid-cols-2 gap-3">
           <ChoiceCard
+            name="listingType"
             selected={values.listingType === 'SELL'}
             onClick={() =>
               form.setValue('listingType', 'SELL', { shouldDirty: true, shouldValidate: true })
@@ -107,6 +112,7 @@ function TypeStep({ wizard }: StepProps) {
             للبيع
           </ChoiceCard>
           <ChoiceCard
+            name="listingType"
             selected={values.listingType === 'RENT'}
             disabled={values.propertyType === 'LAND'}
             onClick={() =>
@@ -165,6 +171,7 @@ function PriceStep({ wizard }: StepProps) {
         <div className="grid grid-cols-3 gap-2" dir="ltr">
           {(['ILS', 'JOD', 'USD'] as const).map((currency) => (
             <ChoiceCard
+              name="currency"
               key={currency}
               selected={form.watch('currency') === currency}
               onClick={() =>
@@ -260,7 +267,7 @@ function ImagesStep({ wizard }: StepProps) {
           <ImagePlus aria-hidden="true" className="size-5" />
           إضافة صور
           <bdi dir="ltr">{uploader.items.length} / 8</bdi>
-          <input className="sr-only" type="file" accept="image/*" multiple disabled={disabled} onChange={(event) => { if (event.target.files) void uploader.addFiles(event.target.files); event.target.value = '' }} />
+          <input name="imagePaths" className="sr-only" type="file" accept="image/*" multiple disabled={disabled} onChange={(event) => { if (event.target.files) void uploader.addFiles(event.target.files); event.target.value = '' }} />
         </label>
       </FormField>
       <Suspense fallback={<Spinner label="جاري تحميل ترتيب الصور" />}>

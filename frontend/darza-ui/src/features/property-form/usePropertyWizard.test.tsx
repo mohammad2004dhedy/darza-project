@@ -76,14 +76,14 @@ describe('create wizard', () => {
     act(() => result.current.back())
     expect(result.current.form.getValues('propertyType')).toBe('HOUSE')
   })
-  it('resets scroll without animation when changing steps', () => {
+  it('resets scroll without animation when changing steps', async () => {
     const { result } = setup()
     vi.mocked(window.scrollTo).mockClear()
     act(() => {
       result.current.form.setValue('propertyType', 'HOUSE')
       result.current.form.setValue('listingType', 'SELL')
     })
-    act(() => result.current.setStep(1))
+    await act(async () => result.current.setStep(1))
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
   })
   it('forces LAND to SELL synchronously and permits RENT after leaving LAND', () => {
@@ -227,4 +227,37 @@ describe('edit image change tracking', () => {
     rerender()
     expect(result.current.unsaved).toBe(false)
   })
+})
+
+
+it.each([false, true])('create Next validates cleared current fields before advancing or returning to review (review=%s)', async (fromReview) => {
+  const { result } = setup()
+  act(() => {
+    result.current.form.setValue('propertyType', 'HOUSE')
+    result.current.form.setValue('listingType', 'SELL')
+    result.current.form.setValue('price', '100')
+    result.current.form.setValue('currency', 'ILS')
+    result.current.form.setValue('townId', '2')
+    result.current.form.setValue('title', 'عنوان صحيح')
+  })
+  await act(async () => result.current.setStep(6))
+  expect(result.current.step).toBe(6)
+  await act(async () => result.current.editStep(5))
+  expect(result.current.returningToReview).toBe(true)
+  if (!fromReview) {
+    await act(async () => result.current.setStep(4))
+    await act(async () => result.current.setStep(5))
+    expect(result.current.returningToReview).toBe(false)
+  }
+  act(() => result.current.form.setValue('title', ''))
+  expect(result.current.completed[5]).toBe(false)
+  expect(result.current.completed[6]).toBe(false)
+  await act(async () => result.current.next())
+  expect(result.current.step).toBe(5)
+  expect(result.current.form.getFieldState('title').error?.message).toBe('أدخل عنوان الإعلان')
+  act(() => result.current.form.setValue('title', 'عنوان مصحح'))
+  expect(result.current.completed[5]).toBe(true)
+  expect(result.current.completed[6]).toBe(true)
+  await act(async () => result.current.next())
+  expect(result.current.step).toBe(6)
 })

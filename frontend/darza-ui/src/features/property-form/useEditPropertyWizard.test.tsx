@@ -208,15 +208,16 @@ it('does not confirm or send a form with no remaining images', async () => {
   expect(update).not.toHaveBeenCalled()
 })
 
-it('warns only while current edit values differ and confirms the wizard back action', () => {
+it('warns on unload only while edit values differ but always allows wizard Back', async () => {
   const { result } = setup()
-  act(() => result.current.form.setValue('title', 'عنوان معدل'))
+  await act(async () => result.current.setStep(5))
+  act(() => result.current.form.setValue('title', ''))
   const dirty = new Event('beforeunload', { cancelable: true })
   window.dispatchEvent(dirty)
   expect(dirty.defaultPrevented).toBe(true)
   act(() => result.current.back())
-  expect(result.current.confirmingBack).toBe(true)
-  act(() => result.current.cancelBack())
+  expect(result.current.step).toBe(4)
+  expect(result.current.form.getValues('title')).toBe('')
   expect(result.current.confirmingBack).toBe(false)
   act(() => result.current.form.setValue('title', property.title))
   const clean = new Event('beforeunload', { cancelable: true })
@@ -320,7 +321,7 @@ it('disables property edit save until a change exists and disables it again afte
     ),
   )
   fireEvent.click(screen.getByRole('button', { name: 'تعديل العنوان والوصف' }))
-  fireEvent.change(screen.getByRole('textbox', { name: /عنوان/ }), {
+  fireEvent.change(await screen.findByRole('textbox', { name: /عنوان/ }), {
     target: { value: property.title },
   })
   fireEvent.click(screen.getByRole('button', { name: 'حفظ والعودة للمراجعة' }))
@@ -330,4 +331,44 @@ it('disables property edit save until a change exists and disables it again afte
     ),
   )
   client.clear()
+})
+
+
+it.each([false, true])('edit Next blocks a cleared title and completion updates immediately (review=%s)', async (fromReview) => {
+  const { result } = setup()
+  if (fromReview) {
+    await act(async () => result.current.setStep(6))
+    await act(async () => result.current.editStep(5))
+  } else {
+    await act(async () => result.current.setStep(5))
+  }
+  expect(result.current.returningToReview).toBe(fromReview)
+  act(() => result.current.form.setValue('title', 'عنوان جديد'))
+  expect(result.current.completed[5]).toBe(true)
+  act(() => result.current.form.setValue('title', ''))
+  expect(result.current.completed[5]).toBe(false)
+  expect(result.current.completed[6]).toBe(false)
+  await act(async () => result.current.next())
+  expect(result.current.step).toBe(5)
+  expect(result.current.form.getFieldState('title').error?.message).toBe('أدخل عنوان الإعلان')
+  act(() => result.current.form.setValue('title', 'عنوان مصحح'))
+  expect(result.current.completed[5]).toBe(true)
+  expect(result.current.completed[6]).toBe(true)
+  await act(async () => result.current.next())
+  expect(result.current.step).toBe(6)
+})
+
+it('updates the title station warning live when a populated title is cleared and fixed', async () => {
+  renderWizard(6)
+  const title = screen.getByRole('textbox', { name: /عنوان الإعلان/ })
+  const station = screen.getByRole('button', { name: 'العنوان والوصف' })
+  fireEvent.change(title, { target: { value: 'عنوان جديد' } })
+  expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).toBeNull()
+  fireEvent.change(title, { target: { value: '' } })
+  expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).not.toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
+  await waitFor(() => expect(document.activeElement).toBe(title))
+  expect(station.getAttribute('aria-current')).toBe('step')
+  fireEvent.change(title, { target: { value: 'عنوان مصحح' } })
+  expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).toBeNull()
 })

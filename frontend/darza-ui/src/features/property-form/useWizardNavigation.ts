@@ -31,24 +31,28 @@ export function useWizardNavigation(
       (result.success ||
         !result.error.issues.some((issue) => fields.some((field) => field === issue.path[0]))),
   )
+  valid[6] = valid.slice(0, 6).every(Boolean)
   const firstInvalid = valid.findIndex((value) => !value)
   const safeRestoredStep = Math.min(restoredStep ?? 0, firstInvalid < 0 ? 6 : firstInvalid)
   const requested = params.has('step') ? Number(params.get('step')) - 1 : safeRestoredStep
   const returningToReview = params.get('from') === 'review'
   function canVisit(index: number) {
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
+    if (index === 6) return valid.slice(0, 6).every(Boolean)
     return editMode || valid.slice(0, index).every(Boolean)
   }
   function destination(index: number, keepReview: boolean, external: boolean) {
-    const blocked = !canVisit(index) || (
-      external && !editMode && keepReview && firstInvalid >= 0
+    const blocked = (external && !canVisit(index)) || (index === 6 && !valid[6]) || (
+      external && keepReview && firstInvalid >= 0
     )
     return {
       index: blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : index,
       keepReview: keepReview && !blocked,
     }
   }
-  const resolved = destination(requested, returningToReview, !ownNavigation)
+  const resolved = ownNavigation && requested >= 0 && requested <= 6 && requested !== 6
+    ? { index: requested, keepReview: returningToReview }
+    : destination(requested, returningToReview, !ownNavigation)
   const step = resolved.index
 
   function goToStep(index: number, { keepReview = false, replace = false, external = false } = {}) {
@@ -70,7 +74,28 @@ export function useWizardNavigation(
     }
   })
 
-  function go(index: number, fromReview = false) {
+  async function validate(fields: FieldPath<FormValues>[]) {
+    const valid = await form.trigger(fields, { shouldFocus: true })
+    if (!valid) {
+      const first = fields.find((field) => form.getFieldState(field).invalid)
+      if (first) document.getElementsByName(first).item(0)?.focus()
+    }
+    return valid
+  }
+
+  async function go(index: number, fromReview = false) {
+    if (!Number.isInteger(index) || index < 0 || index > 6) return
+    if (index === step) return
+    if (!(await validate(stepFields[step]))) return
+    if (step === 4 && !imagesReady) {
+      form.setError('imagePaths', { type: 'validate', message: 'انتظر تجهيز الصور قبل المتابعة' }, { shouldFocus: true })
+      document.getElementsByName('imagePaths').item(0)?.focus()
+      return
+    }
+    const fields = index === 6 ? stepFields.slice(0, 6).flat()
+      : index > step ? stepFields.slice(0, index).flat() : stepFields[step]
+    if (!(await validate(fields))) return
+    if (index > step && valid.slice(0, index).some((value) => !value)) return
     goToStep(index, { keepReview: fromReview })
   }
 
@@ -81,7 +106,7 @@ export function useWizardNavigation(
     completed: valid,
     go,
     setStep: (index: number) => {
-      if (canVisit(index)) go(index)
+      goToStep(index, {})
     },
     editStep: (index: number) => go(index, true),
   }
