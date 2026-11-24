@@ -47,7 +47,7 @@ describe('PhoneField', () => {
   it('moves a pasted country code into the select', async () => {
     const { user, number, code } = setup()
     await user.click(number)
-    await user.paste('+972 59-912-3456')
+    await user.paste('+972 59-000-0000')
     expect(number.value).toBe('590000000')
     expect(code.value).toBe('972')
   })
