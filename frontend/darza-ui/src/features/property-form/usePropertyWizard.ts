@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../hooks/useUnsavedChanges'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -32,7 +33,6 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   const uploader = useImageUploader(initial?.images)
   const initialImages = useRef(initial ? uploader.items.map((item) => item.id).join(',') : '')
   const [confirming, setConfirming] = useState(false)
-  const [confirmingBack, setConfirmingBack] = useState(false)
   const { showToast } = useToast()
   const client = useQueryClient()
   const navigate = useNavigate()
@@ -44,7 +44,6 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   >({ status: 'idle' })
   const [busy, setBusy] = useState(false)
   const locked = useRef(false)
-  const saved = useRef(false)
   const locationRequest = useRef(0)
   const mounted = useRef(true)
   const { setValue, watch } = form
@@ -79,22 +78,13 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   }, [uploader.items, setValue])
 
   const currentValues = useWatch({ control: form.control })
-  const baseline = initial ? editValues(initial) : null
+  const [baseline, setBaseline] = useState(() => initial ? editValues(initial) : null)
   const unsaved = Boolean(baseline && (
     (Object.keys(baseline) as (keyof FormValues)[]).some((key) =>
       JSON.stringify(currentValues[key]) !== JSON.stringify(baseline[key]),
     ) || uploader.items.map((item) => item.id).join(',') !== initialImages.current
   ))
-  useEffect(() => {
-    if (!unsaved) return
-    function preventUnload(event: BeforeUnloadEvent) {
-      if (saved.current) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
-    window.addEventListener('beforeunload', preventUnload)
-    return () => window.removeEventListener('beforeunload', preventUnload)
-  }, [unsaved])
+  const leave = useUnsavedChanges(unsaved)
 
   function imagesReady() {
     if (
@@ -138,8 +128,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
 
   function back() {
     if (locked.current) return
-    if (unsaved && !saved.current) setConfirmingBack(true)
-    else navigation.setStep(Math.max(0, step - 1))
+    leave.requestLeave(() => navigation.setStep(Math.max(0, step - 1)))
   }
 
   function registerNumber(name: NumberField) {
@@ -221,6 +210,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
       await next()
       return
     }
+    if (initial && !unsaved) return
     if (initial && !confirmed) {
       if (!imagesReady()) {
         setStep(4)
@@ -245,8 +235,8 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
         async (values) => {
           try {
             const response = await mutation.mutateAsync(values)
-            saved.current = true
-      propertyDraft.clear()
+            setBaseline(values)
+            propertyDraft.clear()
             form.reset(values)
             initialImages.current = uploader.items.map((item) => item.id).join(',')
             setConfirming(false)
@@ -282,12 +272,10 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     form,
     editMode: Boolean(initial),
     confirming,
-    confirmingBack,
-    cancelBack: () => setConfirmingBack(false),
-    confirmBack: () => {
-      setConfirmingBack(false)
-      if (!locked.current) navigation.setStep(Math.max(0, step - 1))
-    },
+    unsaved,
+    confirmingBack: leave.confirming,
+    cancelBack: leave.cancel,
+    confirmBack: leave.confirm,
     confirm: () => onSubmit(undefined, true),
     cancelConfirmation: () => {
       if (!locked.current) setConfirming(false)

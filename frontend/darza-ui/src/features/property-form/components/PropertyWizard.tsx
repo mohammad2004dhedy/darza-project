@@ -223,8 +223,8 @@ function LocationStep({ wizard }: StepProps) {
     <div className="space-y-5">
       <LocationFields
         cityId={form.watch('cityId')}
-        city={form.register('cityId')}
-        town={form.register('townId')}
+        city={{ ...form.register('cityId'), value: form.watch('cityId') }}
+        town={{ ...form.register('townId'), value: form.watch('townId') }}
         cityError={form.formState.errors.cityId?.message}
         townError={form.formState.errors.townId?.message}
       />
@@ -457,12 +457,15 @@ export function PropertyWizard({ wizard }: StepProps) {
             type="submit"
             fullWidth
             loading={wizard.busy}
-            disabled={wizard.uploader.isProcessing}
+            disabled={wizard.uploader.isProcessing || (wizard.editMode && !wizard.unsaved)}
           >
             {wizard.editMode ? 'حفظ التعديلات' : 'إرسال الإعلان'}
           </Button>
         )}
       </div>
+      {wizard.editMode && !wizard.unsaved && (
+        <p className="text-sm text-text-muted">لا توجد تغييرات للحفظ</p>
+      )}
       <ConfirmModal
         open={wizard.confirmingBack}
         title="تغييرات غير محفوظة"
