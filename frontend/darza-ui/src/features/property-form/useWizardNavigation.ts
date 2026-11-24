@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useWatch, type FieldPath, type UseFormReturn } from 'react-hook-form'
 import { useLocation, useSearchParams } from 'react-router'
 import { formSchema, type FormValues } from './schema'
@@ -20,9 +20,7 @@ export function useWizardNavigation(
   restoredStep?: number,
 ) {
   const [params, setParams] = useSearchParams()
-  const [visited, setVisited] = useState(() => new Set<number>([0]))
   const location = useLocation()
-  const reviewOverride = location.state?.wizardReviewAccess === true
   const values = useWatch({ control: form.control })
   const result = formSchema.safeParse(values)
   const valid = stepFields.map(
@@ -37,28 +35,27 @@ export function useWizardNavigation(
   const returningToReview = params.get('from') === 'review'
   function canVisit(index: number) {
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
-    if (editMode || (returningToReview && index === 6)) return true
-    if (index === 6) return reviewOverride || valid.slice(0, 6).every(Boolean)
-    return [...visited].some((seen) => seen >= index) || valid.slice(0, index).every(Boolean)
+    return editMode || valid.slice(0, index).every(Boolean)
   }
-  const step = canVisit(requested) ? requested : safeRestoredStep
-  if (!visited.has(step)) setVisited(new Set([...visited, step]))
+  const blocked = !canVisit(requested)
+  const step = blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : requested
+  const discardReview = !editMode && (blocked || (returningToReview && !location.state?.wizardReviewAccess && firstInvalid >= 0))
 
   useEffect(() => {
-    if (params.get('step') !== String(step + 1)) {
+    if (params.get('step') !== String(step + 1) || discardReview) {
       setParams(
         (current) => {
           const next = new URLSearchParams(current)
           next.set('step', String(step + 1))
+          if (discardReview) next.delete('from')
           return next
         },
         { replace: true },
       )
     }
-  }, [step, params, setParams])
+  }, [step, params, setParams, discardReview])
 
   function go(index: number, fromReview = false) {
-    setVisited((current) => new Set([...current, step, index]))
     setParams(
       (current) => {
         const next = new URLSearchParams(current)
@@ -67,7 +64,7 @@ export function useWizardNavigation(
         else next.delete('from')
         return next
       },
-      { state: { ...location.state, wizardReviewAccess: index === 6 && returningToReview } },
+      { state: { ...location.state, wizardReviewAccess: fromReview || (index === 6 && returningToReview) } },
     )
   }
 
