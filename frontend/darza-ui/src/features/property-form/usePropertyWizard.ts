@@ -44,7 +44,6 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   >({ status: 'idle' })
   const [busy, setBusy] = useState(false)
   const locked = useRef(false)
-  const saved = useRef(false)
   const locationRequest = useRef(0)
   const mounted = useRef(true)
   const { setValue, watch } = form
@@ -85,7 +84,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
       JSON.stringify(currentValues[key]) !== JSON.stringify(baseline[key]),
     ) || uploader.items.map((item) => item.id).join(',') !== initialImages.current
   ))
-  const leave = useUnsavedChanges(unsaved && !saved.current)
+  const leave = useUnsavedChanges(unsaved)
 
   function imagesReady() {
     if (
@@ -237,7 +236,6 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
           try {
             const response = await mutation.mutateAsync(values)
             setBaseline(values)
-            saved.current = true
       propertyDraft.clear()
             form.reset(values)
             initialImages.current = uploader.items.map((item) => item.id).join(',')
