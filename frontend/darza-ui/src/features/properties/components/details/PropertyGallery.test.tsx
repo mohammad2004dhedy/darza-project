@@ -152,3 +152,19 @@ describe('PropertyGallery', () => {
     expect(window.location.pathname).toBe('/other')
   })
 })
+
+
+it('returns the last viewer index to the inline gallery and reopens without feedback', async () => {
+  desktop = true
+  render(<PropertyGallery images={images} title="منزل" />)
+  fireEvent.click(screen.getByRole('button', { name: 'عرض الصورة 2' }))
+  const dialog = await openViewer(1)
+  fireEvent.click(within(dialog).getByRole('button', { name: 'عرض الصورة 3' }))
+  expect(within(dialog).getByText('3 / 4')).toBeTruthy()
+  await closeViewer(dialog)
+  expect(screen.getByText('3 / 4')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'عرض الصورة 3' }).getAttribute('aria-current')).toBe('true')
+  const reopened = await openViewer(2)
+  expect(within(reopened).getByText('3 / 4')).toBeTruthy()
+  await closeViewer(reopened)
+})

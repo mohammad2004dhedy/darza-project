@@ -11,7 +11,7 @@ interface Props {
   images: ImageResponse[]
   title: string
   initialIndex: number
-  onClose: () => void
+  onClose: (index: number) => void
 }
 
 export function PhotoViewer({ images, title, initialIndex, onClose }: Props) {
@@ -22,7 +22,7 @@ export function PhotoViewer({ images, title, initialIndex, onClose }: Props) {
     onScroll,
     onKeyDown,
   } = usePropertyGallery(images.length, initialIndex)
-  const { dialog, close } = usePhotoViewer(onClose)
+  const { dialog, close } = usePhotoViewer(() => onClose(currentIndex))
   useEffect(() => {
     goTo(initialIndex, 'instant')
   }, [goTo, initialIndex])

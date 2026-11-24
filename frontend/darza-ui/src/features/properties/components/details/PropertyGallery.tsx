@@ -84,7 +84,10 @@ export function PropertyGallery({ images, title }: Props) {
           images={images}
           title={title}
           initialIndex={viewerIndex}
-          onClose={() => setViewerIndex(null)}
+          onClose={(index) => {
+            goTo(index, 'instant')
+            setViewerIndex(null)
+          }}
         />
       )}
     </section>
