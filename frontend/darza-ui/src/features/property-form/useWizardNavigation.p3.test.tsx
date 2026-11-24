@@ -59,7 +59,7 @@ for (const editMode of [false, true]) {
       const price = screen.getByRole('textbox', { name: 'price' })
       fireEvent.change(price, { target: { value: '' } })
       fireEvent.change(screen.getByRole('textbox', { name: 'currency' }), { target: { value: '' } })
-      fireEvent.click(screen.getByRole('button', { name: action, exact: true }))
+      fireEvent.click(screen.getByRole('button', { name: action }))
       await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(2))
       expectStep(1)
       expect(document.activeElement).toBe(price)
@@ -88,7 +88,7 @@ for (const editMode of [false, true]) {
     await waitFor(() => expectStep(0))
     expect(JSON.parse(screen.getByTestId('completed').textContent!)[1]).toBe(false)
     for (const action of ['later step', 'حفظ والعودة للمراجعة']) {
-      await act(async () => { fireEvent.click(screen.getByRole('button', { name: action, exact: true })) })
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: action })) })
       expectStep(0)
     }
     fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
