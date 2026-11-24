@@ -37,6 +37,7 @@ function setup() {
 }
 afterEach(cleanup)
 beforeEach(() => {
+  localStorage.clear()
   vi.clearAllMocks()
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   mocks.items = [{ id: 'one', kind: 'new', blob: new Blob(), status: 'ready' }]
@@ -75,7 +76,11 @@ describe('create wizard', () => {
   it('resets scroll without animation when changing steps', () => {
     const { result } = setup()
     vi.mocked(window.scrollTo).mockClear()
-    act(() => result.current.editStep(5))
+    act(() => {
+      result.current.form.setValue('propertyType', 'HOUSE')
+      result.current.form.setValue('listingType', 'SELL')
+    })
+    act(() => result.current.setStep(1))
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
   })
   it('forces LAND to SELL synchronously and permits RENT after leaving LAND', () => {
@@ -106,11 +111,11 @@ describe('create wizard', () => {
     })
     expect(result.current.form.getValues('townId')).toBe('')
   })
-  it('blocks beforeunload for unsaved images and removes its listener on unmount', () => {
+  it('does not block beforeunload in create mode because drafts cover edits', () => {
     const { unmount } = setup()
     const event = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(event)
-    expect(event.defaultPrevented).toBe(true)
+    expect(event.defaultPrevented).toBe(false)
     unmount()
     const after = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(after)

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { ApiError } from '../../api/client'
 import { useToast } from '../../components/ui/useToast'
@@ -32,6 +32,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   const uploader = useImageUploader(initial?.images)
   const initialImages = useRef(initial ? uploader.items.map((item) => item.id).join(',') : '')
   const [confirming, setConfirming] = useState(false)
+  const [confirmingBack, setConfirmingBack] = useState(false)
   const { showToast } = useToast()
   const client = useQueryClient()
   const navigate = useNavigate()
@@ -77,9 +78,13 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     )
   }, [uploader.items, setValue])
 
-  const unsaved =
-    form.formState.isDirty ||
-    uploader.items.map((item) => item.id).join(',') !== initialImages.current
+  const currentValues = useWatch({ control: form.control })
+  const baseline = initial ? editValues(initial) : null
+  const unsaved = Boolean(baseline && (
+    (Object.keys(baseline) as (keyof FormValues)[]).some((key) =>
+      JSON.stringify(currentValues[key]) !== JSON.stringify(baseline[key]),
+    ) || uploader.items.map((item) => item.id).join(',') !== initialImages.current
+  ))
   useEffect(() => {
     if (!unsaved) return
     function preventUnload(event: BeforeUnloadEvent) {
@@ -132,7 +137,9 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   }
 
   function back() {
-    if (!locked.current) navigation.setStep(Math.max(0, step - 1))
+    if (locked.current) return
+    if (unsaved && !saved.current) setConfirmingBack(true)
+    else navigation.setStep(Math.max(0, step - 1))
   }
 
   function registerNumber(name: NumberField) {
@@ -275,6 +282,12 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     form,
     editMode: Boolean(initial),
     confirming,
+    confirmingBack,
+    cancelBack: () => setConfirmingBack(false),
+    confirmBack: () => {
+      setConfirmingBack(false)
+      if (!locked.current) navigation.setStep(Math.max(0, step - 1))
+    },
     confirm: () => onSubmit(undefined, true),
     cancelConfirmation: () => {
       if (!locked.current) setConfirming(false)
