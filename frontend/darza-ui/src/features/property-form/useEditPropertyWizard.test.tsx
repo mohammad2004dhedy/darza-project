@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { act, cleanup, renderHook } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { PropertyDetailsResponse } from '../../types/api'
 import { ApiError } from '../../api/client'
 import * as api from './api'
 import { usePropertyWizard } from './usePropertyWizard'
+import { PropertyWizard } from './components/PropertyWizard'
+import { locationApi } from '../../api/locationApi'
 
 const { navigate, toast } = vi.hoisted(() => ({ navigate: vi.fn(), toast: vi.fn() }))
 import { MemoryRouter } from 'react-router'
@@ -87,6 +89,7 @@ it('initializes all fields and existing images once, without marking an untouche
     property.images.map((i) => i.path),
   )
   expect(result.current.form.formState.isDirty).toBe(false)
+  expect(result.current.unsaved).toBe(false)
   const event = new Event('beforeunload', { cancelable: true })
   window.dispatchEvent(event)
   expect(event.defaultPrevented).toBe(false)
@@ -101,6 +104,7 @@ it('requires confirmation, cancellation sends nothing, and existing images never
   const get = vi.spyOn(api, 'getUploadUrls')
   const upload = vi.spyOn(api, 'uploadToSignedUrl')
   const { result } = setup()
+  act(() => result.current.form.setValue('title', 'إعلان معدل'))
   await act(async () => {
     await result.current.onSubmit()
   })
@@ -126,6 +130,7 @@ it('requires confirmation, cancellation sends nothing, and existing images never
   expect(get).not.toHaveBeenCalled()
   expect(upload).not.toHaveBeenCalled()
   expect(result.current.form.formState.isDirty).toBe(false)
+  expect(result.current.unsaved).toBe(false)
   const event = new Event('beforeunload', { cancelable: true })
   window.dispatchEvent(event)
   expect(event.defaultPrevented).toBe(false)
@@ -204,4 +209,86 @@ it('warns only while current edit values differ and confirms the wizard back act
   expect(clean.defaultPrevented).toBe(false)
   act(() => result.current.back())
   expect(result.current.confirmingBack).toBe(false)
+})
+
+it('ignores untouched edit submissions without a request, confirmation or toast', async () => {
+  const update = vi.spyOn(api, 'updateProperty')
+  const upload = vi.spyOn(api, 'getUploadUrls')
+  const { result } = setup()
+  expect(result.current.unsaved).toBe(false)
+  await act(async () => {
+    await result.current.submit()
+    await result.current.confirm()
+  })
+  expect(result.current.unsaved).toBe(false)
+  expect(result.current.confirming).toBe(false)
+  expect(update).not.toHaveBeenCalled()
+  expect(upload).not.toHaveBeenCalled()
+  expect(toast).not.toHaveBeenCalled()
+  expect(navigate).not.toHaveBeenCalled()
+})
+it('tracks coordinate changes and reversion against the loaded property', () => {
+  const { result } = setup()
+  act(() => result.current.form.setValue('latitude', '32.123456'))
+  expect(result.current.unsaved).toBe(true)
+  act(() => result.current.form.setValue('latitude', String(property.latitude)))
+  expect(result.current.unsaved).toBe(false)
+  act(() => result.current.form.setValue('longitude', '36.123456'))
+  expect(result.current.unsaved).toBe(true)
+  act(() => result.current.form.setValue('longitude', String(property.longitude)))
+  expect(result.current.unsaved).toBe(false)
+  act(() => result.current.clearLocation())
+  expect(result.current.unsaved).toBe(true)
+})
+function EditWizard() {
+  return <PropertyWizard wizard={usePropertyWizard(property)} />
+}
+function renderWizard(step: number) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={[`/?step=${step}`]}><EditWizard /></MemoryRouter>
+    </QueryClientProvider>,
+  )
+  return client
+}
+it('preselects edit location after city and town options arrive separately', async () => {
+  let resolveCities!: (items: { id: number; name: string }[]) => void
+  let resolveTowns!: (items: { id: number; name: string }[]) => void
+  vi.spyOn(locationApi, 'getCities').mockReturnValue(new Promise((resolve) => { resolveCities = resolve }))
+  const towns = vi.spyOn(locationApi, 'getTowns').mockReturnValue(new Promise((resolve) => { resolveTowns = resolve }))
+  const client = renderWizard(4)
+  const city = screen.getByRole('combobox', { name: /المدينة/ }) as HTMLSelectElement
+  const town = screen.getByRole('combobox', { name: /البلدة/ }) as HTMLSelectElement
+  expect(city.disabled).toBe(true)
+  expect(town.disabled).toBe(true)
+  await act(async () => { resolveCities([{ id: 1, name: 'رام الله' }]) })
+  await waitFor(() => expect(city.value).toBe('1'))
+  expect(towns).toHaveBeenCalledWith(1)
+  expect(town.disabled).toBe(true)
+  await act(async () => { resolveTowns([{ id: 2, name: 'بيتونيا' }]) })
+  await waitFor(() => expect(town.value).toBe('2'))
+  expect(city.selectedOptions[0].textContent).toBe('رام الله')
+  expect(town.selectedOptions[0].textContent).toBe('بيتونيا')
+  fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
+  await waitFor(() => expect(screen.queryByRole('combobox', { name: /البلدة/ })).toBeNull())
+  client.clear()
+})
+it('disables property edit save until a change exists and disables it again after reversion', async () => {
+  vi.spyOn(locationApi, 'getCities').mockResolvedValue([{ id: 1, name: 'رام الله' }])
+  vi.spyOn(locationApi, 'getTowns').mockResolvedValue([{ id: 2, name: 'بيتونيا' }])
+  const client = renderWizard(7)
+  const save = screen.getByRole('button', { name: 'حفظ التعديلات' }) as HTMLButtonElement
+  expect(save.disabled).toBe(true)
+  expect(screen.getByText('لا توجد تغييرات للحفظ')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'تعديل العنوان والوصف' }))
+  const title = await screen.findByRole('textbox', { name: /عنوان/ })
+  fireEvent.change(title, { target: { value: 'إعلان معدل' } })
+  fireEvent.click(screen.getByRole('button', { name: 'حفظ والعودة للمراجعة' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: 'حفظ التعديلات' }).hasAttribute('disabled')).toBe(false))
+  fireEvent.click(screen.getByRole('button', { name: 'تعديل العنوان والوصف' }))
+  fireEvent.change(screen.getByRole('textbox', { name: /عنوان/ }), { target: { value: property.title } })
+  fireEvent.click(screen.getByRole('button', { name: 'حفظ والعودة للمراجعة' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: 'حفظ التعديلات' }).hasAttribute('disabled')).toBe(true))
+  client.clear()
 })

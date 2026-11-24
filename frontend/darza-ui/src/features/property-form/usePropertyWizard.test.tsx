@@ -4,13 +4,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePropertyWizard } from './usePropertyWizard'
+import type { UploadImage } from './useImageUploader'
+import type { PropertyDetailsResponse } from '../../types/api'
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   showToast: vi.fn(),
   create: vi.fn(),
+  update: vi.fn(),
   upload: vi.fn(),
-  items: [] as { id: string; kind: 'new'; blob: Blob; status: string }[],
+  items: [] as UploadImage[],
 }))
 import { MemoryRouter } from 'react-router'
 vi.mock('react-router', async (importOriginal) => ({
@@ -21,13 +24,13 @@ vi.mock('../../context/auth', () => ({ useAuth: () => ({ userId: 7 }) }))
 vi.mock('../../components/ui/useToast', () => ({
   useToast: () => ({ showToast: mocks.showToast }),
 }))
-vi.mock('./api', () => ({ createProperty: mocks.create }))
+vi.mock('./api', () => ({ createProperty: mocks.create, updateProperty: mocks.update }))
 vi.mock('./useImageUploader', () => ({
   useImageUploader: () => ({ items: mocks.items, isProcessing: false, uploadAll: mocks.upload }),
 }))
-function setup() {
+function setup(property?: PropertyDetailsResponse) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return renderHook(() => usePropertyWizard(), {
+  return renderHook(() => usePropertyWizard(property), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>
         <MemoryRouter>{children}</MemoryRouter>
@@ -40,7 +43,7 @@ beforeEach(() => {
   localStorage.clear()
   vi.clearAllMocks()
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
-  mocks.items = [{ id: 'one', kind: 'new', blob: new Blob(), status: 'ready' }]
+  mocks.items = [{ id: 'one', kind: 'new', url: 'blob:one', blob: new Blob(), status: 'ready' }]
   mocks.upload.mockResolvedValue(['properties/7/one.webp'])
   mocks.create.mockResolvedValue({ id: 12, postingStatus: 'PENDING' })
 })
@@ -168,4 +171,37 @@ describe('create wizard', () => {
     expect(result.current.form.getValues('longitude')).toBe('')
   })
 
+})
+
+describe('edit image change tracking', () => {
+  it('detects image order, removals and additions, and becomes clean when the original list is restored', () => {
+    const property: PropertyDetailsResponse = {
+      id: 9, title: 'إعلان موجود', propertyType: 'HOUSE', listingType: 'SELL',
+      price: 100, currency: 'ILS', isAvailable: true,
+      town: { cityId: 1, cityName: 'مدينة', townId: 2, townName: 'بلدة' },
+      user: { id: 7, displayName: 'مالك' },
+      images: [{ path: 'properties/7/a.webp', url: 'a' }, { path: 'properties/7/b.webp', url: 'b' }],
+    }
+    const original: UploadImage[] = property.images.map((image) => ({
+      id: image.path, kind: 'existing', path: image.path, url: image.url, status: 'done',
+    }))
+    mocks.items = original
+    const { result, rerender } = setup(property)
+    expect(result.current.unsaved).toBe(false)
+    mocks.items = [...original].reverse()
+    rerender()
+    expect(result.current.unsaved).toBe(true)
+    mocks.items = original
+    rerender()
+    expect(result.current.unsaved).toBe(false)
+    mocks.items = original.slice(0, 1)
+    rerender()
+    expect(result.current.unsaved).toBe(true)
+    mocks.items = [...original, { id: 'new', kind: 'new', url: 'blob:new', blob: new Blob(), status: 'ready' }]
+    rerender()
+    expect(result.current.unsaved).toBe(true)
+    mocks.items = original
+    rerender()
+    expect(result.current.unsaved).toBe(false)
+  })
 })
