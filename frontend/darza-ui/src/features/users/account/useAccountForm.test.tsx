@@ -72,6 +72,7 @@ it('maps backend field errors and stays on the form', async () => {
     new ApiError(400, 'invalid', { displayName: 'الاسم غير صالح' }),
   )
   const { result } = renderHook(() => useAccountForm(profile))
+  act(() => result.current.form.setValue('displayName', 'جديد'))
   await act(async () => {
     await result.current.onSubmit()
   })
@@ -83,6 +84,9 @@ it('keeps image removal local until save and cancels without saving', () => {
   const { result } = renderHook(() => useAccountForm(profile))
   act(() => result.current.setAvatar({ kind: 'removed' }))
   act(() => result.current.cancel())
+  expect(result.current.leave.confirming).toBe(true)
+  expect(mocks.navigate).not.toHaveBeenCalled()
+  act(() => result.current.leave.confirm())
   expect(saveAccount).not.toHaveBeenCalled()
   expect(mocks.navigate).toHaveBeenCalledWith(-1)
 })
@@ -95,6 +99,7 @@ it('blocks duplicate saves and updates the session only after save completes', a
       }),
   )
   const { result } = renderHook(() => useAccountForm(profile))
+  act(() => result.current.form.setValue('displayName', 'جديد'))
   let pending!: Promise<void>
   await act(async () => {
     pending = result.current.onSubmit()
@@ -126,6 +131,7 @@ it('renders backend errors on the form and cancels local avatar removal', async 
     expect(screen.getByRole('button', { name: 'إلغاء' }).hasAttribute('disabled')).toBe(false),
   )
   fireEvent.click(screen.getByRole('button', { name: 'إلغاء' }))
+  fireEvent.click(screen.getByRole('button', { name: 'تأكيد' }))
   expect(mocks.navigate).toHaveBeenCalledWith(-1)
   expect(saveAccount).toHaveBeenCalledTimes(1)
 })
@@ -133,9 +139,12 @@ it('renders backend errors on the form and cancels local avatar removal', async 
 it('keeps saved profile changes and retries only avatar deletion after partial failure', async () => {
   let finishDelete!: () => void
   vi.mocked(deleteProfileImage)
-    .mockImplementationOnce(() => new Promise<void>((_, reject) => {
-      finishDelete = () => reject(new Error('delete failed'))
-    }))
+    .mockImplementationOnce(
+      () =>
+        new Promise<void>((_, reject) => {
+          finishDelete = () => reject(new Error('delete failed'))
+        }),
+    )
     .mockResolvedValueOnce(undefined)
   const { result } = renderHook(() => useAccountForm(profile))
   act(() => {
@@ -143,7 +152,9 @@ it('keeps saved profile changes and retries only avatar deletion after partial f
     result.current.setAvatar({ kind: 'removed' })
   })
   let submission!: Promise<void>
-  await act(async () => { submission = result.current.onSubmit() })
+  await act(async () => {
+    submission = result.current.onSubmit()
+  })
   expect(mocks.login).toHaveBeenCalledWith(expect.objectContaining({ displayName: 'جديد' }))
   expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['users'] })
   await act(async () => {
@@ -156,8 +167,83 @@ it('keeps saved profile changes and retries only avatar deletion after partial f
   })
   expect(mocks.navigate).not.toHaveBeenCalled()
   const retry = mocks.showToast.mock.lastCall![1].onClick
-  await act(async () => { retry() })
+  await act(async () => {
+    retry()
+  })
   expect(saveAccount).toHaveBeenCalledTimes(1)
   expect(deleteProfileImage).toHaveBeenCalledTimes(2)
   expect(mocks.navigate).toHaveBeenCalledWith(-1)
+})
+
+it('does not save or toast when account fields and avatar are unchanged', async () => {
+  const { result } = renderHook(() => useAccountForm(profile))
+  expect(result.current.unsaved).toBe(false)
+  expect(result.current.form.getValues()).toMatchObject({ cityId: '1', townId: '2' })
+  await act(async () => {
+    await result.current.onSubmit()
+  })
+  expect(saveAccount).not.toHaveBeenCalled()
+  expect(deleteProfileImage).not.toHaveBeenCalled()
+  expect(mocks.showToast).not.toHaveBeenCalled()
+  expect(mocks.navigate).not.toHaveBeenCalled()
+})
+it('tracks reverted fields and new or removed avatars and resets the saved baseline', async () => {
+  vi.mocked(saveAccount).mockResolvedValueOnce(undefined)
+  const { result } = renderHook(() => useAccountForm(profile))
+  act(() => result.current.form.setValue('displayName', 'جديد'))
+  expect(result.current.unsaved).toBe(true)
+  act(() => result.current.form.setValue('displayName', profile.displayName))
+  expect(result.current.unsaved).toBe(false)
+  act(() => result.current.setAvatar({ kind: 'removed' }))
+  expect(result.current.unsaved).toBe(true)
+  act(() => result.current.setAvatar({ kind: 'unchanged' }))
+  expect(result.current.unsaved).toBe(false)
+  act(() =>
+    result.current.setAvatar({ kind: 'uploaded', path: 'profile/new.webp', url: 'blob:preview' }),
+  )
+  expect(result.current.unsaved).toBe(true)
+  act(() => result.current.setAvatar({ kind: 'unchanged' }))
+  act(() => result.current.form.setValue('displayName', 'جديد'))
+  await act(async () => {
+    await result.current.onSubmit()
+  })
+  expect(result.current.unsaved).toBe(false)
+  mocks.showToast.mockClear()
+  await act(async () => {
+    await result.current.onSubmit()
+  })
+  expect(saveAccount).toHaveBeenCalledTimes(1)
+  expect(mocks.showToast).not.toHaveBeenCalled()
+  act(() => result.current.form.setValue('displayName', profile.displayName))
+  expect(result.current.unsaved).toBe(true)
+})
+it('disables account save and shows the helper until a field changes, including after reversion', () => {
+  render(<AccountForm profile={profile} />)
+  const save = screen.getByRole('button', { name: 'حفظ' }) as HTMLButtonElement
+  expect(save.disabled).toBe(true)
+  expect(screen.getByText('لا توجد تغييرات للحفظ')).toBeTruthy()
+  const name = screen.getByRole('textbox', { name: /الاسم/ })
+  fireEvent.change(name, { target: { value: 'جديد' } })
+  expect(save.disabled).toBe(false)
+  expect(screen.queryByText('لا توجد تغييرات للحفظ')).toBeNull()
+  fireEvent.change(name, { target: { value: profile.displayName } })
+  expect(save.disabled).toBe(true)
+})
+
+it('warns before unloading only while account changes are unsaved', () => {
+  const { result, unmount } = renderHook(() => useAccountForm(profile))
+  function prevented() {
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    return event.defaultPrevented
+  }
+  expect(prevented()).toBe(false)
+  act(() => result.current.form.setValue('address', 'عنوان جديد'))
+  expect(prevented()).toBe(true)
+  act(() => result.current.form.setValue('address', ''))
+  expect(prevented()).toBe(false)
+  act(() => result.current.setAvatar({ kind: 'removed' }))
+  expect(prevented()).toBe(true)
+  unmount()
+  expect(prevented()).toBe(false)
 })
