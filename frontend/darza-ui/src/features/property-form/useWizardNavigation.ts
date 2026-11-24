@@ -75,7 +75,9 @@ export function useWizardNavigation(
   })
 
   async function go(index: number, fromReview = false) {
+    if (!Number.isInteger(index) || index < 0 || index > 6) return
     if (index === step) return
+    if (!(await form.trigger(stepFields[step], { shouldFocus: true }))) return
     const fields = index === 6 ? stepFields.slice(0, 6).flat()
       : index > step ? stepFields.slice(0, index).flat() : stepFields[step]
     if (!(await form.trigger(fields, { shouldFocus: true }))) return
