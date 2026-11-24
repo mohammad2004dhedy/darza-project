@@ -1,3 +1,4 @@
+import { ConfirmModal } from '../../../components/ui/ConfirmModal'
 import type { MyProfileUserResponse } from '../../../types/api'
 import { Button } from '../../../components/ui/Button'
 import { FormField } from '../../../components/ui/FormField'
@@ -45,8 +46,9 @@ export function AccountForm({ profile }: { profile: MyProfileUserResponse }) {
           <Input {...register('address')} autoComplete="street-address" maxLength={255} />
         </FormField>
         <FormError message={state.formError} />
+        {!state.unsaved && <p className="text-sm text-text-muted">لا توجد تغييرات للحفظ</p>}
         <div className="flex gap-3">
-          <Button type="submit" loading={isSubmitting} disabled={state.uploading}>
+          <Button type="submit" loading={isSubmitting} disabled={state.uploading || !state.unsaved}>
             حفظ
           </Button>
           <Button variant="outline" onClick={state.cancel}>
@@ -54,6 +56,13 @@ export function AccountForm({ profile }: { profile: MyProfileUserResponse }) {
           </Button>
         </div>
       </fieldset>
+      <ConfirmModal
+        open={state.leave.confirming}
+        title="تغييرات غير محفوظة"
+        message="لديك تغييرات غير محفوظة، هل تريد المغادرة؟"
+        onCancel={state.leave.cancel}
+        onConfirm={state.leave.confirm}
+      />
     </form>
   )
 }

@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '../../../hooks/useUnsavedChanges'
 import { useRef, useState, type FormEvent } from 'react'
 import { useController, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -61,6 +62,8 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     try {
       await deleteProfileImage()
       setAvatar({ kind: 'unchanged' })
+      setBaseline(form.getValues())
+      form.reset(form.getValues())
       await cache.invalidateQueries({ queryKey: ['users'] })
       showToast('تم حفظ الحساب')
       navigate(-1)
@@ -76,7 +79,7 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     }
   }
   const submit = async (values: AccountSubmission) => {
-    if (uploading) return
+    if (uploading || !unsaved) return
     setFormError(null)
     try {
       await saveAccount(
@@ -102,10 +105,13 @@ export function useAccountForm(profile: MyProfileUserResponse) {
         cache.invalidateQueries({ queryKey: ['users'] }),
         cache.invalidateQueries({ queryKey: ['properties'] }),
       ])
+      setBaseline(form.getValues())
+      form.reset(form.getValues())
       if (avatar.kind === 'removed') {
         await removeAvatar()
         return
       }
+      setAvatar({ kind: 'unchanged' })
       showToast('تم حفظ الحساب')
       navigate(-1)
     } catch (error) {
@@ -120,7 +126,7 @@ export function useAccountForm(profile: MyProfileUserResponse) {
   }
   const onSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
-    if (submitting.current || uploading) return
+    if (submitting.current || uploading || !unsaved) return
     submitting.current = true
     try {
       await form.handleSubmit(submit)(event)
@@ -140,6 +146,8 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     setUploading,
     formError,
     onSubmit,
-    cancel: () => navigate(-1),
+    unsaved,
+    leave,
+    cancel: () => leave.requestLeave(() => navigate(-1)),
   }
 }

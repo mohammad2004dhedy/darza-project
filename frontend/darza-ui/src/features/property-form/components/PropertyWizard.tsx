@@ -457,12 +457,15 @@ export function PropertyWizard({ wizard }: StepProps) {
             type="submit"
             fullWidth
             loading={wizard.busy}
-            disabled={wizard.uploader.isProcessing}
+            disabled={wizard.uploader.isProcessing || (wizard.editMode && !wizard.unsaved)}
           >
             {wizard.editMode ? 'حفظ التعديلات' : 'إرسال الإعلان'}
           </Button>
         )}
       </div>
+      {wizard.editMode && !wizard.unsaved && (
+        <p className="text-sm text-text-muted">لا توجد تغييرات للحفظ</p>
+      )}
       <ConfirmModal
         open={wizard.confirmingBack}
         title="تغييرات غير محفوظة"
