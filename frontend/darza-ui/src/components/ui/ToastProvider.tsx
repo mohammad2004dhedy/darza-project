@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { ToastContext } from './ToastContext'
+import { ToastContext, type ToastAction } from './ToastContext'
 import { Toast } from './Toast'
 
 export interface ToastProviderProps {
@@ -7,15 +7,17 @@ export interface ToastProviderProps {
 }
 export function ToastProvider({ children }: ToastProviderProps) {
   const [message, setMessage] = useState('')
+  const [action, setAction] = useState<ToastAction>()
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const dismiss = useCallback(() => {
     clearTimeout(timerRef.current)
     setMessage('')
   }, [])
-  const showToast = useCallback((text: string) => {
+  const showToast = useCallback((text: string, nextAction?: ToastAction) => {
     clearTimeout(timerRef.current)
     setMessage(text)
-    timerRef.current = setTimeout(() => setMessage(''), 6000)
+    setAction(nextAction)
+    if (!nextAction) timerRef.current = setTimeout(() => setMessage(''), 6000)
   }, [])
   useEffect(() => () => clearTimeout(timerRef.current), [])
   const value = useMemo(() => ({ showToast }), [showToast])
@@ -28,7 +30,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
         aria-atomic="true"
         className="pointer-events-none fixed inset-x-4 top-20 z-50 mx-auto max-w-md"
       >
-        {message && <Toast message={message} onDismiss={dismiss} className="pointer-events-auto" />}
+        {message && <Toast action={action} message={message} onDismiss={dismiss} className="pointer-events-auto" />}
       </div>
     </ToastContext.Provider>
   )

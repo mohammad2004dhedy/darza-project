@@ -10,7 +10,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { ApiError } from '../../../api/client'
-import { saveAccount } from './api'
+import { deleteProfileImage, saveAccount } from './api'
 import { useAccountForm } from './useAccountForm'
 import { AccountForm } from './AccountForm'
 vi.mock('../../location/components/LocationFields', () => ({ LocationFields: () => null }))
@@ -36,7 +36,7 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('../../../components/ui/useToast', () => ({
   useToast: () => ({ showToast: mocks.showToast }),
 }))
-vi.mock('./api', () => ({ saveAccount: vi.fn() }))
+vi.mock('./api', () => ({ saveAccount: vi.fn(), deleteProfileImage: vi.fn() }))
 const profile = {
   id: 7,
   displayName: 'قديم',
@@ -120,11 +120,44 @@ it('renders backend errors on the form and cancels local avatar removal', async 
   expect(saveAccount).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: 'حفظ' }))
   await screen.findByText('الاسم غير صالح')
-  expect(saveAccount).toHaveBeenCalledWith(expect.anything(), { kind: 'removed' })
+  expect(saveAccount).toHaveBeenCalledWith(expect.anything(), { kind: 'unchanged' })
+  expect(deleteProfileImage).not.toHaveBeenCalled()
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'إلغاء' }).hasAttribute('disabled')).toBe(false),
   )
   fireEvent.click(screen.getByRole('button', { name: 'إلغاء' }))
   expect(mocks.navigate).toHaveBeenCalledWith(-1)
   expect(saveAccount).toHaveBeenCalledTimes(1)
+})
+
+it('keeps saved profile changes and retries only avatar deletion after partial failure', async () => {
+  let finishDelete!: () => void
+  vi.mocked(deleteProfileImage)
+    .mockImplementationOnce(() => new Promise<void>((_, reject) => {
+      finishDelete = () => reject(new Error('delete failed'))
+    }))
+    .mockResolvedValueOnce(undefined)
+  const { result } = renderHook(() => useAccountForm(profile))
+  act(() => {
+    result.current.form.setValue('displayName', 'جديد')
+    result.current.setAvatar({ kind: 'removed' })
+  })
+  let submission!: Promise<void>
+  await act(async () => { submission = result.current.onSubmit() })
+  expect(mocks.login).toHaveBeenCalledWith(expect.objectContaining({ displayName: 'جديد' }))
+  expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['users'] })
+  await act(async () => {
+    finishDelete()
+    await submission
+  })
+  expect(mocks.showToast).toHaveBeenLastCalledWith('تم حفظ بياناتك، لكن تعذر حذف الصورة', {
+    label: 'إعادة المحاولة',
+    onClick: expect.any(Function),
+  })
+  expect(mocks.navigate).not.toHaveBeenCalled()
+  const retry = mocks.showToast.mock.lastCall![1].onClick
+  await act(async () => { retry() })
+  expect(saveAccount).toHaveBeenCalledTimes(1)
+  expect(deleteProfileImage).toHaveBeenCalledTimes(2)
+  expect(mocks.navigate).toHaveBeenCalledWith(-1)
 })

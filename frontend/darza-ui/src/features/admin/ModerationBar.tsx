@@ -26,6 +26,7 @@ export function ModerationBar({
     await Promise.all([
       client.invalidateQueries({ queryKey: ['admin', 'properties'] }),
       client.invalidateQueries({ queryKey: ['properties'] }),
+      client.invalidateQueries({ queryKey: ['users'] }),
     ])
   }
 

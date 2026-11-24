@@ -10,7 +10,7 @@ import { applyPhoneInput, initialPhoneInput } from '../../../lib/phone'
 import { resolveSubmitError } from '../../../lib/formErrors'
 import type { MyProfileUserResponse } from '../../../types/api'
 import { accountSchema, type AccountValues, type AccountSubmission } from './schema'
-import { saveAccount, type AvatarChange } from './api'
+import { deleteProfileImage, saveAccount, type AvatarChange } from './api'
 
 export function useAccountForm(profile: MyProfileUserResponse) {
   const auth = useAuth()
@@ -56,7 +56,26 @@ export function useAccountForm(profile: MyProfileUserResponse) {
     value: cityId,
   }
   const town = { ...form.register('townId'), value: townId }
-  const submit = form.handleSubmit(async (values) => {
+
+  const removeAvatar = async () => {
+    try {
+      await deleteProfileImage()
+      setAvatar({ kind: 'unchanged' })
+      await cache.invalidateQueries({ queryKey: ['users'] })
+      showToast('تم حفظ الحساب')
+      navigate(-1)
+    } catch {
+      showToast('تم حفظ بياناتك، لكن تعذر حذف الصورة', {
+        label: 'إعادة المحاولة',
+        onClick: () => {
+          if (submitting.current) return
+          submitting.current = true
+          void removeAvatar().finally(() => { submitting.current = false })
+        },
+      })
+    }
+  }
+  const submit = async (values: AccountSubmission) => {
     if (uploading) return
     setFormError(null)
     try {
@@ -68,7 +87,7 @@ export function useAccountForm(profile: MyProfileUserResponse) {
           townId: Number(values.townId),
           address: values.address,
         },
-        avatar,
+        avatar.kind === 'removed' ? { kind: 'unchanged' } : avatar,
       )
       if (auth.token && auth.role && auth.expiresAt && auth.userId !== null) {
         auth.login({
@@ -83,6 +102,10 @@ export function useAccountForm(profile: MyProfileUserResponse) {
         cache.invalidateQueries({ queryKey: ['users'] }),
         cache.invalidateQueries({ queryKey: ['properties'] }),
       ])
+      if (avatar.kind === 'removed') {
+        await removeAvatar()
+        return
+      }
       showToast('تم حفظ الحساب')
       navigate(-1)
     } catch (error) {
@@ -94,13 +117,13 @@ export function useAccountForm(profile: MyProfileUserResponse) {
         ),
       )
     }
-  })
+  }
   const onSubmit = async (event?: FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
     if (submitting.current || uploading) return
     submitting.current = true
     try {
-      await submit(event)
+      await form.handleSubmit(submit)(event)
     } finally {
       submitting.current = false
     }

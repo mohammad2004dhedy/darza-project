@@ -153,3 +153,21 @@ it.each([400, 409])('toasts and refetches on an already-moderated %s response', 
   expect(onSuccess).not.toHaveBeenCalled()
   expect(screen.queryByRole('dialog')).toBeNull()
 })
+
+it.each(['approve', 'reject'])('invalidates every embedded property cache after %s', async (action) => {
+  const { client, onSuccess } = setup()
+  const keys = [
+    ['properties', { search: 'بيت' }],
+    ['properties', 'details', 23],
+    ['users', 'me', 'properties'],
+    ['users', 7, 'properties'],
+    ['admin', 'properties', 'REJECTED'],
+  ]
+  keys.forEach(key => client.setQueryData(key, []))
+  fireEvent.click(screen.getByRole('button', { name: action === 'approve' ? 'موافقة' : 'رفض' }))
+  if (action === 'reject') fireEvent.change(screen.getByLabelText('سبب الرفض'), { target: { value: 'سبب' } })
+  fireEvent.click(screen.getByRole('button', { name: action === 'approve' ? 'تأكيد الموافقة' : 'إرسال' }))
+  await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1))
+  keys.forEach(key => expect(client.getQueryState(key)?.isInvalidated).toBe(true))
+  expect(client.getQueryState(['unrelated'])?.isInvalidated).toBe(false)
+})

@@ -24,3 +24,7 @@ export async function saveAccount(
     await request('/api/users/me/profile/image', { method: 'DELETE' })
   }
 }
+
+export function deleteProfileImage() {
+  return request<void>('/api/users/me/profile/image', { method: 'DELETE' })
+}

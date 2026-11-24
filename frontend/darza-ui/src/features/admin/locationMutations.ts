@@ -15,6 +15,9 @@ export function useLocationMutation() {
       await Promise.all([
         client.invalidateQueries({ queryKey: ['cities'] }),
         client.invalidateQueries({ queryKey: ['towns'] }),
+        client.invalidateQueries({
+          predicate: ({ queryKey }) => ['properties', 'users', 'admin'].includes(String(queryKey[0])),
+        }),
       ])
     },
   })
