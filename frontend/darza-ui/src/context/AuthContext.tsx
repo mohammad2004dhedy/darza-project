@@ -15,6 +15,7 @@ import { setUnauthorizedHandler } from '../api/client'
 import type { LoginResponse } from '../types/api'
 import { useToast } from '../components/ui/useToast'
 import { AuthContext, type AuthValue } from './auth'
+import { LogoutConfirmationProvider } from '../features/users/components/LogoutConfirmationProvider'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -117,5 +118,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }),
     [session, login, logout],
   )
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      <LogoutConfirmationProvider>{children}</LogoutConfirmationProvider>
+    </AuthContext.Provider>
+  )
 }

@@ -7,6 +7,7 @@ import { ApiError } from '../api/client'
 import * as client from '../api/client'
 import { AuthContext, type AuthValue } from '../context/auth'
 import ProfilePage from './ProfilePage'
+import { LogoutConfirmationProvider } from '../features/users/components/LogoutConfirmationProvider'
 import { AppRoutes } from '../routes/AppRoutes'
 
 const publicUser = { id: 7, displayName: 'معلن', createdAt: '2025-01-01T00:00:00Z' }
@@ -31,7 +32,9 @@ function renderPage(id = '7', userId: number | null = null, appRoute?: string) {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter initialEntries={[appRoute ?? `/users/${id}`]}>
           {appRoute ? (
-            <AppRoutes />
+            <LogoutConfirmationProvider>
+              <AppRoutes />
+            </LogoutConfirmationProvider>
           ) : (
             <Routes>
               <Route path="/users/:id" element={<ProfilePage />} />

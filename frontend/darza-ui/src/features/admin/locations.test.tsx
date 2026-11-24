@@ -7,6 +7,8 @@ import { ToastContext } from '../../components/ui/ToastContext'
 import { request } from '../../api/client'
 import { LocationFormModal } from './LocationFormModal'
 import { useLocationMutation } from './locationMutations'
+import { MemoryRouter } from 'react-router'
+import { LocationManagement } from './LocationManagement'
 
 vi.mock('../../api/client', async importOriginal => ({
   ...await importOriginal<typeof import('../../api/client')>(),
@@ -45,4 +47,33 @@ it.each([false, true])('invalidates locations after create/delete remove=%s', as
   const { result } = renderHook(() => useLocationMutation(), { wrapper })
   await act(() => result.current.mutateAsync({ target: { kind: 'city', name: 'نابلس', ...(remove ? { id: 1 } : {}) }, name: 'نابلس', remove }))
   for (const key of [['cities'], ['towns', 1], ['towns', 2]]) expect(client.getQueryState(key)?.isInvalidated).toBe(true)
+})
+
+it('shows location guidance and an empty towns section before selecting a city', () => {
+  const { client, wrapper } = setup()
+  client.setQueryData(['cities'], [{ id: 1, name: 'نابلس' }, { id: 2, name: 'رام الله' }])
+  render(<MemoryRouter><LocationManagement /></MemoryRouter>, { wrapper })
+  expect(screen.getByText('اختر مدينة لعرض بلداتها وإدارتها.')).toBeTruthy()
+  expect(screen.getAllByRole('heading', { name: 'البلدات' })).toHaveLength(1)
+  expect(screen.getByText('اختر مدينة من الأعلى')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'نابلس' }).closest('li')?.hasAttribute('aria-current')).toBe(false)
+})
+
+it('highlights the selected city and updates the towns heading when selection changes', () => {
+  const { client, wrapper } = setup()
+  client.setQueryData(['cities'], [{ id: 1, name: 'نابلس' }, { id: 2, name: 'رام الله' }])
+  client.setQueryData(['towns', 1], [])
+  client.setQueryData(['towns', 2], [])
+  render(<MemoryRouter initialEntries={['/admin/locations?city=1']}><LocationManagement /></MemoryRouter>, { wrapper })
+  const nablus = screen.getByRole('button', { name: 'نابلس' }).closest('li')
+  expect(nablus?.getAttribute('aria-current')).toBe('true')
+  expect(nablus?.classList.contains('border-primary')).toBe(true)
+  expect(nablus?.classList.contains('bg-primary/5')).toBe(true)
+  expect(screen.getAllByRole('heading', { name: 'البلدات (نابلس)' })).toHaveLength(1)
+  expect(screen.queryByText('اختر مدينة من الأعلى')).toBeNull()
+  expect(screen.getByText('اختر مدينة لعرض بلداتها وإدارتها.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'رام الله' }))
+  expect(screen.getAllByRole('heading', { name: 'البلدات (رام الله)' })).toHaveLength(1)
+  expect(nablus?.hasAttribute('aria-current')).toBe(false)
+  expect(screen.getByRole('button', { name: 'رام الله' }).closest('li')?.getAttribute('aria-current')).toBe('true')
 })

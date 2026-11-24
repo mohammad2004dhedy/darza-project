@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthValue } from '../context/auth'
+import { LogoutConfirmationProvider } from '../features/users/components/LogoutConfirmationProvider'
 import { AppRoutes } from './AppRoutes'
 
 vi.mock('../pages/LoginPage', () => ({ default: () => <h1>Login destination</h1> }))
@@ -26,7 +27,9 @@ it.each(['/settings', '/settings/account'])('protects %s from anonymous visitors
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter initialEntries={[path]}>
           <Suspense>
-            <AppRoutes />
+            <LogoutConfirmationProvider>
+              <AppRoutes />
+            </LogoutConfirmationProvider>
           </Suspense>
         </MemoryRouter>
       </QueryClientProvider>

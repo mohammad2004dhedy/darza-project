@@ -23,16 +23,13 @@ export function FilterBadges({ filters, onChange }: { filters: PropertyFilters; 
   if (filters.sortType && filters.sortType !== 'NEWEST') add('sortType', sortOptions)
   if (filters.text) badges.push({ key: 'text', label: filters.text })
   return (
-    <div aria-label="الفلاتر المطبقة" className="flex flex-wrap gap-2">
+    <div aria-label="الفلاتر المطبقة" className="flex w-full flex-wrap gap-2">
       {badges.map(({ key, label }) => (
         <button key={key} type="button" aria-label={`إزالة ${label}`} onClick={() => onChange(removeFilter(filters, key))}
           className="inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-surface ps-3 pe-3 py-1 text-sm text-text">
           <span className="break-words">{label}</span><X size={14} className="shrink-0" aria-hidden="true" />
         </button>
       ))}
-      <button type="button" className="inline-flex items-center gap-2 text-sm text-primary" onClick={() => onChange({})}>
-        مسح الكل<X size={14} aria-hidden="true" />
-      </button>
     </div>
   )
 }

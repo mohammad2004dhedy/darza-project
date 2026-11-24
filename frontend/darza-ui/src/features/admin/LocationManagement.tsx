@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { Info } from 'lucide-react'
 import { useCities, useTowns } from '../location/hooks'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { useToast } from '../../components/ui/useToast'
@@ -43,17 +44,24 @@ export function LocationManagement() {
     finally { locked.current = false }
   }
   return <div className="space-y-8">
-    <h1 className="text-2xl font-bold">إدارة المدن والبلدات</h1>
+    <div className="space-y-2">
+      <h1 className="text-2xl font-bold">إدارة المدن والبلدات</h1>
+      <p className="flex items-center gap-2 text-sm text-text-muted"><Info size={18} className="shrink-0" aria-hidden="true" />اختر مدينة لعرض بلداتها وإدارتها.</p>
+    </div>
     <LocationSection title="المدن" empty="لا توجد مدن بعد" items={cities.data} loading={cities.isPending} error={cities.isError}
       retry={() => { void cities.refetch() }} busy={busy} selected={cityId} onSelect={selectCity}
       onAdd={() => setEditing({ kind: 'city', name: '' })}
       onEdit={item => setEditing({ kind: 'city', ...item })}
       onDelete={item => setDeleting({ kind: 'city', ...item })} />
-    {cityId && <LocationSection title="البلدات" empty="لا توجد بلدات في هذه المدينة" items={towns.data} loading={towns.isPending} error={towns.isError}
+    {cityId ? <LocationSection title={`البلدات (${cities.data?.find(city => city.id === cityId)?.name})`} empty="لا توجد بلدات في هذه المدينة" items={towns.data} loading={towns.isPending} error={towns.isError}
       retry={() => { void towns.refetch() }} busy={busy}
       onAdd={() => setEditing({ kind: 'town', cityId, name: '' })}
       onEdit={item => setEditing({ kind: 'town', cityId, ...item })}
-      onDelete={item => setDeleting({ kind: 'town', cityId, ...item })} />}
+      onDelete={item => setDeleting({ kind: 'town', cityId, ...item })} /> :
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold">البلدات</h2>
+        <p className="text-sm text-text-muted">اختر مدينة من الأعلى</p>
+      </section>}
     {editing && <LocationFormModal target={editing} onClose={() => setEditing(undefined)} />}
     <ConfirmModal open={!!deleting} tone="danger" title="حذف الموقع" confirmText="حذف"
       message={`سيتم حذف «${deleting?.name ?? ''}» نهائياً. لن تُحذف البلدات أو حسابات المستخدمين المرتبطة به؛ قد يرفض النظام الحذف عند وجود ارتباطات.`}
