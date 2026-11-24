@@ -149,21 +149,21 @@ export function MapView(props: MapViewProps) {
     <div className="relative isolate h-full overflow-hidden rounded-lg bg-background">
       {props.mapsUrl && (
         <a href={props.mapsUrl} target="_blank" rel="noopener noreferrer"
-          aria-label="افتح الموقع في خرائط جوجل" className="absolute inset-0 z-[500]" />
+          aria-label="افتح الموقع في خرائط جوجل" className="absolute inset-0 z-(--z-inner-link)" />
       )}
       <div
         ref={container}
         role="region"
         aria-label="خريطة موقع العقار"
-        className="h-full"
+        className="relative isolate h-full"
       />
       {status === 'loading' && (
-        <div className="pointer-events-none absolute inset-0 z-[1000] grid place-items-center bg-background">
+        <div className="pointer-events-none absolute inset-0 z-(--z-inner-actions) grid place-items-center bg-background">
           <Spinner label="جاري تحميل الخريطة" />
         </div>
       )}
       {status === 'error' && (
-        <div role="alert" className="absolute inset-0 z-[1000] grid place-content-center justify-items-center gap-3 bg-background p-4 text-center">
+        <div role="alert" className="absolute inset-0 z-(--z-inner-actions) grid place-content-center justify-items-center gap-3 bg-background p-4 text-center">
           <p className="text-danger">تعذر تحميل الخريطة</p>
           <Button variant="outline" onClick={() => { setStatus('loading'); setAttempt((value) => value + 1) }}>إعادة المحاولة</Button>
         </div>

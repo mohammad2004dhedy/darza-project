@@ -38,7 +38,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="التنقل الرئيسي"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-border bg-surface p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-(--z-navigation) flex border-t border-border bg-surface p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden"
     >
       {items.map((item) => (
         <MobileNavItem key={item.to} {...item} />

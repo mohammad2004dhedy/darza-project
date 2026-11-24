@@ -28,7 +28,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        className="pointer-events-none fixed inset-x-4 top-20 z-50 mx-auto max-w-md"
+        className="pointer-events-none fixed inset-x-4 top-20 z-(--z-toast) mx-auto max-w-md"
       >
         {message && <Toast action={action} message={message} onDismiss={dismiss} className="pointer-events-auto" />}
       </div>

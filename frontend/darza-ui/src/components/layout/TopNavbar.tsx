@@ -5,7 +5,7 @@ import { Logo } from './Logo'
 export function TopNavbar() {
   const { isAuthenticated, isAdmin } = useAuth()
   return (
-    <header className="sticky top-0 z-20 flex min-h-20 items-center justify-between gap-4 border-b border-border bg-surface px-4 md:px-6">
+    <header className="sticky top-0 z-(--z-navigation) flex min-h-20 items-center justify-between gap-4 border-b border-border bg-surface px-4 md:px-6">
       <Logo />
       <div className="flex items-center gap-3">
         <nav aria-label="التنقل الرئيسي" className="hidden items-center gap-3 md:flex">

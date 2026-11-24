@@ -23,7 +23,7 @@ export function AdminModeration() {
       <div
         role="tablist"
         aria-label="حالة الإعلانات"
-        className="sticky top-20 z-20 flex gap-3 border-b border-border bg-surface px-3 py-3"
+        className="sticky top-20 z-(--z-tabs) flex gap-3 border-b border-border bg-surface px-3 py-3"
       >
         {(
           [

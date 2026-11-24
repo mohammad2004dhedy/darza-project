@@ -68,7 +68,7 @@ export function PropertyOwnerActions({
     <section
       aria-label="إدارة الإعلان"
       className={
-        compact ? 'relative z-10' : 'space-y-3 rounded-lg border border-border bg-surface p-4'
+        compact ? 'relative z-(--z-inner-actions)' : 'space-y-3 rounded-lg border border-border bg-surface p-4'
       }
     >
       {!compact && <h2 className="font-bold">إدارة إعلانك</h2>}
