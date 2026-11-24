@@ -7,6 +7,7 @@ import {
   MapPin,
   Ruler,
   Text,
+  TriangleAlert,
 } from 'lucide-react'
 
 import { stepTitles } from '../wizardSteps'
@@ -22,14 +23,15 @@ interface Props {
   busy: boolean
 }
 
-export function WizardStepper({ editMode = false, step, completed, canVisit, onStep, busy }: Props) {
+export function WizardStepper({ step, completed, onStep, busy }: Props) {
   return (
     <nav aria-label="خطوات الإعلان" className="space-y-4">
       <p className="font-bold md:hidden">{stepTitles[step]}</p>
       <ol className="flex items-start">
         {stepTitles.map((title, index) => {
           const current = index === step
-          const done = editMode || (!current && completed[index] && index < step)
+          const done = !current && completed[index] && index !== 6
+          const invalid = !completed[index] && index !== 6
           const Icon = done ? Check : icons[index]
           return (
             <li key={title} className="relative flex min-w-0 flex-1 justify-center">
@@ -43,14 +45,15 @@ export function WizardStepper({ editMode = false, step, completed, canVisit, onS
                 type="button"
                 aria-label={title}
                 aria-current={current ? 'step' : undefined}
-                disabled={busy || (!editMode && !canVisit(index))}
+                disabled={busy}
                 onClick={() => onStep(index)}
                 className="relative flex w-full min-w-0 flex-col items-center gap-2 px-0.5 text-center disabled:cursor-not-allowed md:px-1"
               >
                 <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-full border-2 ${done ? 'border-primary bg-primary text-on-primary' : current ? 'border-primary bg-surface text-primary' : 'border-border bg-background text-text-muted'} ${current ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                  className={`relative flex size-10 shrink-0 items-center justify-center rounded-full border-2 ${invalid ? 'border-warning bg-warning-soft text-warning' : done ? 'border-primary bg-primary text-on-primary' : current ? 'border-primary bg-surface text-primary' : 'border-border bg-background text-text-muted'} ${current ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''}`}
                 >
                   <Icon className="size-5" aria-hidden="true" />
+                  {invalid && <TriangleAlert aria-label="خطوة غير مكتملة" className="absolute -end-1 -top-1 size-4 rounded-full bg-surface text-warning" />}
                 </span>
                 <span
                   className={`hidden text-xs md:block ${current ? 'font-bold text-primary' : 'text-text-muted'}`}
