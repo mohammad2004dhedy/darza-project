@@ -41,7 +41,7 @@ const profile = {
   id: 7,
   displayName: 'قديم',
   email: 'test@example.com',
-  phoneNumber: '+970591234567',
+  phoneNumber: '+970590000000',
   createdAt: '',
   town: { cityId: 1, cityName: 'مدينة', townId: 2, townName: 'بلدة' },
 }

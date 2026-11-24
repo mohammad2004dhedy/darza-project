@@ -22,7 +22,7 @@ const property: PropertyDetailsResponse = {
   currency: 'ILS',
   isAvailable: false,
   town: { townId: 1, townName: 'بيرزيت', cityId: 1, cityName: 'رام الله' },
-  user: { id: 9, displayName: 'ناشر', phoneNumber: '+970599123456' },
+  user: { id: 9, displayName: 'ناشر', phoneNumber: '+970590000000' },
   images: [],
 }
 afterEach(() => {
@@ -91,10 +91,10 @@ function renderContact(value = property, userId: number | null = null) {
 it('keeps valid contact buttons active for unavailable properties', () => {
   renderContact()
   expect(screen.getByRole('link', { name: 'التواصل على واتساب' }).getAttribute('href')).toContain(
-    'https://wa.me/970599123456?text=',
+    'https://wa.me/970590000000?text=',
   )
   expect(screen.getByRole('link', { name: 'الاتصال بالمعلن' }).getAttribute('href')).toBe(
-    'tel:+970599123456',
+    'tel:+970590000000',
   )
 })
 it.each(['owner', 'missing', 'invalid'])('hides contacts for %s', (kind) => {

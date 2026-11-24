@@ -9,7 +9,7 @@ const user = {
   id: 1,
   displayName: 'أحمد',
   email: 'user@example.com',
-  phoneNumber: '+970599123456',
+  phoneNumber: '+970590000000',
   createdAt: '2025-01-01',
 }
 

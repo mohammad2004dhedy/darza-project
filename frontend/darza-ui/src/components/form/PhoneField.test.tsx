@@ -26,8 +26,8 @@ afterEach(cleanup)
 describe('PhoneField', () => {
   it('requires a code choice for Palestinian numbers', async () => {
     const { user, number, code } = setup()
-    await user.type(number, '0599123456')
-    expect(number.value).toBe('599123456')
+    await user.type(number, '0590000000')
+    expect(number.value).toBe('590000000')
     expect(code.value).toBe('')
     expect(screen.getByRole('alert').textContent).toBe('اختار كود الدولة +970 أو +972')
     await user.selectOptions(code, '970')
@@ -37,7 +37,7 @@ describe('PhoneField', () => {
 
   it('selects 972 and disables 970 for Israeli prefixes', async () => {
     const { user, number, code, option970 } = setup()
-    await user.type(number, '0549123456')
+    await user.type(number, '0540000000')
     expect(code.value).toBe('972')
     expect(option970.disabled).toBe(true)
     await user.selectOptions(code, '970')
@@ -48,14 +48,14 @@ describe('PhoneField', () => {
     const { user, number, code } = setup()
     await user.click(number)
     await user.paste('+972 59-912-3456')
-    expect(number.value).toBe('599123456')
+    expect(number.value).toBe('590000000')
     expect(code.value).toBe('972')
   })
 
   it('keeps a code the user picked for Palestinian numbers', async () => {
     const { user, number, code, option970 } = setup()
     await user.selectOptions(code, '972')
-    await user.type(number, '0599123456')
+    await user.type(number, '0590000000')
     expect(code.value).toBe('972')
     expect(option970.disabled).toBe(false)
   })

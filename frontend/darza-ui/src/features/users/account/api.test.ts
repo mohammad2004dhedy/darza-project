@@ -5,7 +5,7 @@ vi.mock('../../../api/client', () => ({ request: vi.fn() }))
 const payload = {
   displayName: 'اسم',
   countryCode: '970' as const,
-  phoneNumber: '591234567',
+  phoneNumber: '590000000',
   townId: 1,
 }
 beforeEach(() => vi.mocked(request).mockReset())

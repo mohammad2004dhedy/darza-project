@@ -10,7 +10,7 @@ import ProfilePage from './ProfilePage'
 import { AppRoutes } from '../routes/AppRoutes'
 
 const publicUser = { id: 7, displayName: 'معلن', createdAt: '2025-01-01T00:00:00Z' }
-const privateUser = { ...publicUser, phoneNumber: '+970599123456', email: 'private@example.com' }
+const privateUser = { ...publicUser, phoneNumber: '+970590000000', email: 'private@example.com' }
 const properties = { content: [], page: 0, hasNext: false }
 
 function renderPage(id = '7', userId: number | null = null, appRoute?: string) {

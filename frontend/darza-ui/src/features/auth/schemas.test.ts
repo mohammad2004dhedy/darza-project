@@ -26,7 +26,7 @@ describe('registerSchema', () => {
     email: 'user@example.com',
     password: 'password123',
     countryCode: '970' as const,
-    phoneNumber: '599123456',
+    phoneNumber: '590000000',
     cityId: '1',
     townId: '2',
     address: '',
@@ -47,8 +47,8 @@ describe('registerSchema', () => {
     [{ password: 'short' }, 'password'],
     [{ password: 'a'.repeat(65) }, 'password'],
     [{ phoneNumber: '' }, 'phoneNumber'],
-    [{ phoneNumber: '59912345' }, 'phoneNumber'],
-    [{ phoneNumber: '519123456' }, 'phoneNumber'],
+    [{ phoneNumber: '59000000' }, 'phoneNumber'],
+    [{ phoneNumber: '510000000' }, 'phoneNumber'],
     [{ phoneNumber: '+97' }, 'phoneNumber'],
     [{ countryCode: '971' }, 'countryCode'],
     [{ cityId: '' }, 'cityId'],
@@ -59,7 +59,7 @@ describe('registerSchema', () => {
   })
 
   it('reports 970 with an Israeli number on the country code', () => {
-    const result = registerSchema.safeParse({ ...valid, phoneNumber: '549123456' })
+    const result = registerSchema.safeParse({ ...valid, phoneNumber: '540000000' })
     expect(result.error?.issues).toEqual([
       expect.objectContaining({
         path: ['countryCode'],

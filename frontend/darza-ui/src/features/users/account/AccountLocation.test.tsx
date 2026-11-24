@@ -34,7 +34,7 @@ it('selects the saved city and town when options load asynchronously and clears 
           id: 7,
           displayName: 'اسم',
           email: 'test@example.com',
-          phoneNumber: '+970591234567',
+          phoneNumber: '+970590000000',
           createdAt: '',
           town: { cityId: 1, cityName: 'القدس', townId: 1, townName: 'البلدة القديمة' },
         }}

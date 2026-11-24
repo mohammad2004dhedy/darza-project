@@ -16,7 +16,7 @@ const baseProperty: PropertyCardResponse = {
   currency: 'ILS',
   town: { townId: 8, townName: 'بيت لحم', cityId: 2, cityName: 'القدس' },
   isAvailable: true,
-  user: { id: 7, displayName: 'ناشر العقار', phoneNumber: '599123456' },
+  user: { id: 7, displayName: 'ناشر العقار', phoneNumber: '590000000' },
 }
 
 function renderCard(property: PropertyCardResponse, eager?: boolean) {
@@ -52,7 +52,7 @@ describe('PropertyCard', () => {
     expect(screen.queryByText(/غرف|حمامات|م²/)).toBeNull()
     expect(screen.queryByText(/بالساعة|باليوم|بالشهر|بالسنة/)).toBeNull()
     expect(screen.getByText('بيت لحم').closest('p')).toBeTruthy()
-    expect(screen.queryByText('599123456')).toBeNull()
+    expect(screen.queryByText('590000000')).toBeNull()
   })
 
   it('omits optional values returned as null', () => {
@@ -208,7 +208,7 @@ describe('PropertyCard', () => {
     const publisher = screen.getByRole('link', { name: 'الناشر: ناشر العقار' })
     expect(publisher.querySelector('img')).toBeNull()
     expect(publisher.querySelector('[aria-hidden="true"]')).toBeTruthy()
-    expect(screen.queryByText('599123456')).toBeNull()
+    expect(screen.queryByText('590000000')).toBeNull()
   })
 
   it('does not expose public moderation fields', () => {

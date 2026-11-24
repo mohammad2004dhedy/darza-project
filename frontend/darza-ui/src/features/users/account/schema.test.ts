@@ -3,7 +3,7 @@ import { accountSchema } from './schema'
 const values = {
   displayName: ' اسم ',
   countryCode: '970',
-  phoneNumber: '591234567',
+  phoneNumber: '590000000',
   cityId: '1',
   townId: '2',
   address: '',
@@ -15,7 +15,7 @@ describe('account schema', () => {
   it.each([
     { displayName: ' ' },
     { phoneNumber: '123' },
-    { countryCode: '970', phoneNumber: '521234567' },
+    { countryCode: '970', phoneNumber: '520000000' },
     { townId: '0' },
     { cityId: 'NaN' },
     { address: 'a'.repeat(256) },
