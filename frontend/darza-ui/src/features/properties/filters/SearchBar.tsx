@@ -3,6 +3,7 @@ import { Input } from '../../../components/ui/Input'
 
 export interface SearchBarHandle {
   flush: () => string
+  clear: () => void
 }
 
 export function SearchBar({ text, onChange, ref }: {
@@ -38,7 +39,15 @@ export function SearchBar({ text, onChange, ref }: {
     }
     return value
   }
-  useImperativeHandle(ref, () => ({ flush }))
+  useImperativeHandle(ref, () => ({
+    flush,
+    clear: () => {
+      clearTimeout(timer.current)
+      timer.current = undefined
+      setValue('')
+      setSubmitted(undefined)
+    },
+  }))
   return (
     <Input
       type="search"
