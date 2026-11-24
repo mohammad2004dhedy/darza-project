@@ -25,11 +25,11 @@ export function PropertyMapPreview({ latitude, longitude, mapsUrl }: Props) {
   return (
     <div ref={ref} className="relative h-48 overflow-hidden rounded-lg bg-background">
       {visible ? (
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" aria-label="افتح الموقع في خرائط جوجل" className="block h-full">
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" aria-label="افتح الموقع في خرائط جوجل" className="absolute inset-0 z-[500]" />
           <Suspense fallback={<div className="grid h-full place-items-center"><Spinner label="جاري تحميل الخريطة" /></div>}>
             <MapView lat={latitude} lng={longitude} interactive={false} />
           </Suspense>
-        </a>
+
       ) : <div aria-label="معاينة الموقع قيد التحميل" className="h-full bg-background" />}
     </div>
   )
