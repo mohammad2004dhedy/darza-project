@@ -102,7 +102,7 @@ describe('PropertyGallery', () => {
     render(<PropertyGallery images={images} title="منزل" />)
     const dialog = await openViewer(1)
     expect(within(dialog).getByText('2 / 4')).toBeTruthy()
-    expect(dialog.open).toBe(true)
+    expect(dialog.hasAttribute('open')).toBe(true)
     expect(document.documentElement.matches(':has(dialog[open])')).toBe(true)
     expect(document.body.style.overflow).toBe('auto')
     fireEvent.keyDown(dialog, { key: 'ArrowRight' })
