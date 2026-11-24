@@ -5,14 +5,16 @@ import { WizardStepper } from './WizardStepper'
 
 afterEach(cleanup)
 
-it('fills every edit station and keeps the current station distinct and all stations available', () => {
+it('uses current validity in edit mode while keeping the current station distinct and available stations interactive', () => {
   const onStep = vi.fn()
-  render(<WizardStepper editMode step={3} completed={[]} canVisit={() => false} onStep={onStep} busy={false} />)
+  render(<WizardStepper editMode step={3} completed={[true, true, true, true, true, true, true]} canVisit={() => true} onStep={onStep} busy={false} />)
   const buttons = screen.getAllByRole('button')
   buttons.forEach((button, index) => {
     expect((button as HTMLButtonElement).disabled).toBe(false)
-    expect(button.firstElementChild?.className).toContain('bg-primary')
-    expect(button.querySelector('.lucide-check')).not.toBeNull()
+    if (index !== 3 && index < 6) {
+      expect(button.firstElementChild?.className).toContain('bg-primary')
+      expect(button.querySelector('.lucide-check')).not.toBeNull()
+    }
     fireEvent.click(button)
     expect(onStep).toHaveBeenLastCalledWith(index)
   })
@@ -21,11 +23,35 @@ it('fills every edit station and keeps the current station distinct and all stat
   expect(buttons[3].lastElementChild?.className).toContain('font-bold')
 })
 
-it('preserves create progress, current styling and locked stations', () => {
+it('preserves create progress and current styling while allowing navigation to validate attempted jumps', () => {
   render(<WizardStepper step={1} completed={[true, true, true]} canVisit={(index) => index < 2} onStep={vi.fn()} busy={false} />)
   const buttons = screen.getAllByRole('button')
   expect(buttons[0].firstElementChild?.className).toContain('bg-primary')
   expect(buttons[1].firstElementChild?.className).toContain('bg-surface')
-  expect(buttons[2].firstElementChild?.className).toContain('bg-background')
-  expect((buttons[2] as HTMLButtonElement).disabled).toBe(true)
+  expect(buttons[2].firstElementChild?.className).toContain('bg-primary')
+  expect((buttons[2] as HTMLButtonElement).disabled).toBe(false)
+})
+
+
+it.each([false, true])('replaces completion with a warning when a field is cleared and restores it when fixed (edit=%s)', (editMode) => {
+  const props = { editMode, step: 3, canVisit: () => true, onStep: vi.fn(), busy: false }
+  const completed = Array<boolean>(7).fill(true)
+  const view = render(<WizardStepper {...props} completed={completed} />)
+  const station = () => screen.getAllByRole('button')[1]
+  expect(station().querySelector('.lucide-check')).not.toBeNull()
+  view.rerender(<WizardStepper {...props} completed={completed.map((valid, index) => index === 1 ? false : valid)} />)
+  expect(station().querySelector('.lucide-check')).toBeNull()
+  expect(station().querySelector('.lucide-triangle-alert, .lucide-circle-alert')).not.toBeNull()
+  expect(station().firstElementChild?.className).not.toContain('bg-primary')
+  view.rerender(<WizardStepper {...props} completed={completed} />)
+  expect(station().querySelector('.lucide-check')).not.toBeNull()
+  expect(station().querySelector('.lucide-triangle-alert, .lucide-circle-alert')).toBeNull()
+})
+
+
+it('disables every station while busy', () => {
+  render(<WizardStepper step={1} completed={[true]} canVisit={() => true} onStep={vi.fn()} busy />)
+  screen.getAllByRole('button').forEach((button) => {
+    expect((button as HTMLButtonElement).disabled).toBe(true)
+  })
 })
