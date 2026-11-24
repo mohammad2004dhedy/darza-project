@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useCities, useTowns } from '../location/hooks'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
@@ -10,8 +10,17 @@ import { useLocationMutation, type LocationTarget } from './locationMutations'
 export function LocationManagement() {
   const [params, setParams] = useSearchParams()
   const id = Number(params.get('city'))
-  const cityId = Number.isSafeInteger(id) && id > 0 ? id : undefined
   const cities = useCities()
+  const cityId = cities.data?.some(city => city.id === id) ? id : undefined
+  useEffect(() => {
+    if (cities.isSuccess && params.has('city') && cityId === undefined) {
+      setParams(previous => {
+        const next = new URLSearchParams(previous)
+        next.delete('city')
+        return next
+      }, { replace: true })
+    }
+  }, [cities.isSuccess, cityId, params, setParams])
   const towns = useTowns(cityId)
   const [editing, setEditing] = useState<LocationTarget>()
   const [deleting, setDeleting] = useState<LocationTarget>()
