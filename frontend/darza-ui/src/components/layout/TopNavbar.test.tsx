@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { TopNavbar } from './TopNavbar'
+import { LogoutConfirmationProvider } from '../../features/users/components/LogoutConfirmationProvider'
 const auth = vi.hoisted(() => ({
   isAuthenticated: false,
   isAdmin: false,
@@ -10,6 +11,12 @@ const auth = vi.hoisted(() => ({
 }))
 vi.mock('../../context/auth', () => ({ useAuth: () => auth }))
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.open = true
+  }
+  HTMLDialogElement.prototype.close = function () {
+    this.open = false
+  }
   auth.isAuthenticated = false
   auth.isAdmin = false
   auth.logout.mockClear()
@@ -19,7 +26,9 @@ afterEach(cleanup)
 function renderNavbar() {
   render(
     <MemoryRouter>
-      <TopNavbar />
+      <LogoutConfirmationProvider>
+        <TopNavbar />
+      </LogoutConfirmationProvider>
     </MemoryRouter>,
   )
 }
@@ -48,6 +57,8 @@ it('links authenticated users to home, create and account alongside working logo
   expect(screen.queryByRole('link', { name: 'تسجيل الدخول' })).toBeNull()
   expect(screen.queryByRole('link', { name: 'لوحة الإدارة' })).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'تسجيل الخروج' }))
+  expect(auth.logout).not.toHaveBeenCalled()
+  fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'تسجيل الخروج' }))
   expect(auth.logout).toHaveBeenCalledOnce()
 })
 
