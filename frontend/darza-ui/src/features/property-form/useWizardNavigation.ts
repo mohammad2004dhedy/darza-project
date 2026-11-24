@@ -31,6 +31,7 @@ export function useWizardNavigation(
       (result.success ||
         !result.error.issues.some((issue) => fields.some((field) => field === issue.path[0]))),
   )
+  valid[6] = valid.slice(0, 6).every(Boolean)
   const firstInvalid = valid.findIndex((value) => !value)
   const safeRestoredStep = Math.min(restoredStep ?? 0, firstInvalid < 0 ? 6 : firstInvalid)
   const requested = params.has('step') ? Number(params.get('step')) - 1 : safeRestoredStep
@@ -41,8 +42,8 @@ export function useWizardNavigation(
     return editMode || valid.slice(0, index).every(Boolean)
   }
   function destination(index: number, keepReview: boolean, external: boolean) {
-    const blocked = !canVisit(index) || (
-      external && !editMode && keepReview && firstInvalid >= 0
+    const blocked = (external && !canVisit(index)) || (index === 6 && !valid[6]) || (
+      external && keepReview && firstInvalid >= 0
     )
     return {
       index: blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : index,
