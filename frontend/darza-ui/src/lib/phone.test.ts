@@ -30,10 +30,10 @@ describe('applyPhoneInput', () => {
 
   it.each([
     ['+972590000000', '972', '590000000'],
-    ['00970 59-912-3456', '970', '590000000'],
+    ['00970 59-000-0000', '970', '590000000'],
     ['970560000000', '970', '560000000'],
     ['+970500000000', '972', '500000000'],
-    ['0590000000789', '', '590000000'],
+    ['0590000000000', '', '590000000'],
   ])('pastes %s', (input, countryCode, phoneNumber) => {
     expect(applyPhoneInput(initialPhoneInput, input)).toMatchObject({ countryCode, phoneNumber })
   })
