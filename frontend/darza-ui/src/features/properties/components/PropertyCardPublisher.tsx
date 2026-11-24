@@ -7,7 +7,7 @@ export function PropertyCardPublisher({ user }: { user: PropertyUserResponse }) 
   return (
     <Link
       to={`/users/${user.id}`}
-      className="relative z-10 inline-flex max-w-full items-center gap-2 rounded-md text-sm text-text-muted focus-visible:outline-primary"
+      className="relative z-10 inline-flex after:absolute after:inset-s-0 after:inset-e-0 after:top-1/2 after:min-h-11 after:-translate-y-1/2 max-w-full items-center gap-2 rounded-md text-sm text-text-muted focus-visible:outline-primary"
     >
       <ImageWithPlaceholder
         src={imageUrl}

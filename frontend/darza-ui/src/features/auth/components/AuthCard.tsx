@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { Logo } from '../../../components/layout/Logo'
 
 interface AuthCardProps {
@@ -18,6 +18,7 @@ export function AuthCard({
   footerLinkTo,
   children,
 }: AuthCardProps) {
+  const location = useLocation()
   return (
     <section
       aria-labelledby="auth-title"
@@ -34,7 +35,8 @@ export function AuthCard({
       <p className="mt-6 text-center text-sm text-text-muted">
         {footerText}{' '}
         <Link
-          to={footerLinkTo}
+          to={{ pathname: footerLinkTo, search: location.search }}
+          state={location.state}
           className="font-bold text-primary underline-offset-4 hover:underline"
         >
           {footerLinkLabel}

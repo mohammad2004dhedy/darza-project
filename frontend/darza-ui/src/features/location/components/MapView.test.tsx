@@ -218,3 +218,17 @@ it('disposes a partially initialized map on failure', async () => {
   await screen.findByRole('alert')
   expect(leaflet.map.remove).toHaveBeenCalledOnce()
 })
+
+it('keeps preview retry outside the Google Maps link', async () => {
+  leaflet.createMap.mockImplementationOnce(() => {
+    throw new Error('Unavailable')
+  })
+  render(<MapView interactive={false} mapsUrl="https://www.google.com/maps?q=31.9,35.2" />)
+  const retry = await screen.findByRole('button', { name: 'إعادة المحاولة' })
+  expect(retry.closest('a')).toBeNull()
+  expect(screen.getByRole('link', { name: 'افتح الموقع في خرائط جوجل' }).getAttribute('href'))
+    .toBe('https://www.google.com/maps?q=31.9,35.2')
+  fireEvent.click(retry)
+  await ready()
+  expect(leaflet.createMap).toHaveBeenCalledTimes(2)
+})

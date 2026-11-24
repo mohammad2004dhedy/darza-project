@@ -19,21 +19,21 @@ function type(text: string, state: PhoneInputState = initialPhoneInput): PhoneIn
 
 describe('applyPhoneInput', () => {
   it.each([
-    ['0599123456', '', '599123456'],
-    ['0569123456', '', '569123456'],
-    ['0549123456', '972', '549123456'],
-    ['0509123456', '972', '509123456'],
-    ['٠٥٩٩١٢٣٤٥٦', '', '599123456'],
+    ['0590000000', '', '590000000'],
+    ['0560000000', '', '560000000'],
+    ['0540000000', '972', '540000000'],
+    ['0500000000', '972', '500000000'],
+    ['٠٥٩٠٠٠٠٠٠٠', '', '590000000'],
   ])('types %s', (input, countryCode, phoneNumber) => {
     expect(type(input)).toMatchObject({ countryCode, phoneNumber })
   })
 
   it.each([
-    ['+972599123456', '972', '599123456'],
-    ['00970 59-912-3456', '970', '599123456'],
-    ['970569123456', '970', '569123456'],
-    ['+970509123456', '972', '509123456'],
-    ['0599123456789', '', '599123456'],
+    ['+972590000000', '972', '590000000'],
+    ['00970 59-000-0000', '970', '590000000'],
+    ['970560000000', '970', '560000000'],
+    ['+970500000000', '972', '500000000'],
+    ['0590000000000', '', '590000000'],
   ])('pastes %s', (input, countryCode, phoneNumber) => {
     expect(applyPhoneInput(initialPhoneInput, input)).toMatchObject({ countryCode, phoneNumber })
   })
@@ -53,9 +53,9 @@ describe('applyPhoneInput', () => {
 
   it('keeps a manually chosen code for Palestinian numbers', () => {
     const chosen = selectCountryCode(initialPhoneInput, '972')
-    expect(type('0599123456', chosen)).toMatchObject({
+    expect(type('0590000000', chosen)).toMatchObject({
       countryCode: '972',
-      phoneNumber: '599123456',
+      phoneNumber: '590000000',
     })
   })
 
@@ -68,13 +68,13 @@ describe('applyPhoneInput', () => {
   })
 
   it('does not allow 970 for Israeli numbers', () => {
-    const israeli = type('0549123456')
+    const israeli = type('0540000000')
     expect(selectCountryCode(israeli, '970')).toBe(israeli)
   })
 })
 
 describe('phoneFieldsSchema', () => {
-  it.each(['569123456', '599123456'])('requires a code for %s', (phoneNumber) => {
+  it.each(['560000000', '590000000'])('requires a code for %s', (phoneNumber) => {
     const result = phoneFieldsSchema.safeParse({ countryCode: '', phoneNumber })
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]).toMatchObject({
@@ -84,13 +84,13 @@ describe('phoneFieldsSchema', () => {
   })
 
   it.each([
-    ['970', '599123456', true],
-    ['972', '599123456', true],
-    ['972', '549123456', true],
-    ['970', '549123456', false],
-    ['970', '519123456', false],
-    ['970', '59912345', false],
-    ['971', '599123456', false],
+    ['970', '590000000', true],
+    ['972', '590000000', true],
+    ['972', '540000000', true],
+    ['970', '540000000', false],
+    ['970', '510000000', false],
+    ['970', '59000000', false],
+    ['971', '590000000', false],
   ])('validates %s %s', (countryCode, phoneNumber, valid) => {
     expect(phoneFieldsSchema.safeParse({ countryCode, phoneNumber }).success).toBe(valid)
   })
@@ -98,11 +98,11 @@ describe('phoneFieldsSchema', () => {
 
 describe('contact URLs', () => {
   it('creates links only for international numbers', () => {
-    expect(toWhatsAppUrl('+970599123456', 'مرحبا')).toBe(
-      'https://wa.me/970599123456?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7',
+    expect(toWhatsAppUrl('+970590000000', 'مرحبا')).toBe(
+      'https://wa.me/970590000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7',
     )
-    expect(toTelUrl('+972549123456')).toBe('tel:+972549123456')
-    expect(toWhatsAppUrl('0599123456')).toBeNull()
-    expect(toTelUrl('0599123456')).toBeNull()
+    expect(toTelUrl('+972540000000')).toBe('tel:+972540000000')
+    expect(toWhatsAppUrl('0590000000')).toBeNull()
+    expect(toTelUrl('0590000000')).toBeNull()
   })
 })

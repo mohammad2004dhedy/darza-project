@@ -20,7 +20,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           variant="ghost"
           size="sm"
           disabled={disabled}
-          className="absolute start-1 top-0.5 min-h-10 px-2"
+          className="absolute start-1 top-0 min-h-11 min-w-11 px-2"
           aria-label={visible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
           aria-pressed={visible}
           onClick={() => setVisible((value) => !value)}

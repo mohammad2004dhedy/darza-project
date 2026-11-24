@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PropertyMapPreview } from './PropertyMapPreview'
 
-vi.mock('../../../location/components/MapView', () => ({ MapView: () => <div data-testid="map-view" /> }))
+vi.mock('../../../location/components/MapView', () => ({ MapView: ({ mapsUrl }: { mapsUrl: string }) => <div data-testid="map-view"><a href={mapsUrl} rel="noopener noreferrer" aria-label="افتح الموقع في خرائط جوجل" /></div> }))
 afterEach(() => vi.unstubAllGlobals())
 it('defers the non-interactive map until the preview approaches the viewport', async () => {
   let callback!: IntersectionObserverCallback
