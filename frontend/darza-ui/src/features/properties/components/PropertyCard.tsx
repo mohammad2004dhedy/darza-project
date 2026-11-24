@@ -1,3 +1,4 @@
+import { PublishedAt } from './PublishedAt'
 import { RejectionReason } from './RejectionReason'
 import { Tag } from './Tag'
 import { memo, useId, type ReactNode } from 'react'
@@ -81,7 +82,14 @@ function PropertyCardView({ property, eager = false, actions }: PropertyCardProp
         <PropertyCardPrice property={property} id={`${id}-price`} />
         <PropertyCardMeta property={property} />
         <PropertyCardLocation property={property} id={`${id}-location`} />
-        <PropertyCardPublisher user={property.user} />
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <PropertyCardPublisher user={property.user} />
+          </div>
+          <div className="min-w-0 max-w-1/2 text-end">
+            <PublishedAt iso={property.approvedAt} />
+          </div>
+        </div>
       </div>
     </article>
   )

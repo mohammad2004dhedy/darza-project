@@ -1,3 +1,4 @@
+import { PublishedAt } from '../features/properties/components/PublishedAt'
 import { BackButton } from '../components/ui/BackButton'
 import { PropertyOwnerActions } from '../features/property-form/components/PropertyOwnerActions'
 import { useNavigate, useParams } from 'react-router'
@@ -37,6 +38,7 @@ export default function PropertyDetailsPage() {
         <BackButton />
         <PropertyGallery images={property.images} title={property.title} />
         <PropertyHeader property={property} />
+        <PublishedAt iso={property.approvedAt} details />
         <PropertyOwnerActions property={property} />
         <PropertyKeyFacts property={property} />
         <PropertyDescription description={property.description} />
