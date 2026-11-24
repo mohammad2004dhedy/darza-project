@@ -128,7 +128,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
 
   function back() {
     if (locked.current) return
-    leave.requestLeave(() => navigation.setStep(Math.max(0, step - 1)))
+    navigation.setStep(Math.max(0, step - 1))
   }
 
   function registerNumber(name: NumberField) {
@@ -282,7 +282,7 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     },
     ...navigation,
     setStep: (index: number) => {
-      if (!locked.current) navigation.setStep(index)
+      if (!locked.current) return navigation.go(index)
     },
     next,
     back,

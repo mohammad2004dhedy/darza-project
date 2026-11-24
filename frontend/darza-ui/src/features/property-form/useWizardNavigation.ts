@@ -37,6 +37,7 @@ export function useWizardNavigation(
   const returningToReview = params.get('from') === 'review'
   function canVisit(index: number) {
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
+    if (index === 6) return valid.slice(0, 6).every(Boolean)
     return editMode || valid.slice(0, index).every(Boolean)
   }
   function destination(index: number, keepReview: boolean, external: boolean) {
@@ -48,7 +49,9 @@ export function useWizardNavigation(
       keepReview: keepReview && !blocked,
     }
   }
-  const resolved = destination(requested, returningToReview, !ownNavigation)
+  const resolved = ownNavigation && requested >= 0 && requested <= 6 && requested !== 6
+    ? { index: requested, keepReview: returningToReview }
+    : destination(requested, returningToReview, !ownNavigation)
   const step = resolved.index
 
   function goToStep(index: number, { keepReview = false, replace = false, external = false } = {}) {
@@ -70,7 +73,12 @@ export function useWizardNavigation(
     }
   })
 
-  function go(index: number, fromReview = false) {
+  async function go(index: number, fromReview = false) {
+    if (index === step) return
+    const fields = index === 6 ? stepFields.slice(0, 6).flat()
+      : index > step ? stepFields.slice(0, index).flat() : stepFields[step]
+    if (!(await form.trigger(fields, { shouldFocus: true }))) return
+    if (index > step && valid.slice(0, index).some((value) => !value)) return
     goToStep(index, { keepReview: fromReview })
   }
 
@@ -81,7 +89,7 @@ export function useWizardNavigation(
     completed: valid,
     go,
     setStep: (index: number) => {
-      if (canVisit(index)) go(index)
+      goToStep(index, {})
     },
     editStep: (index: number) => go(index, true),
   }
