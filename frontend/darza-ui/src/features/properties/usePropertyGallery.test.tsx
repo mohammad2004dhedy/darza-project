@@ -12,7 +12,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-function setup(rtl = false) {
+function setup(rtl = false, initialIndex = 0) {
   const element = document.createElement('div')
   for (let index = 0; index < 4; index++) {
     const slide = document.createElement('div')
@@ -21,7 +21,7 @@ function setup(rtl = false) {
   }
   element.scrollTo = vi.fn()
   const mounted = renderHook(() => {
-    const result = usePropertyGallery(4)
+    const result = usePropertyGallery(4, initialIndex)
     result.track.current = element
     return result
   })
@@ -142,4 +142,18 @@ it('updates user scrolling only after the last event settles or scrollend', () =
     element.dispatchEvent(new Event('scrollend'))
   })
   expect(result.current.activeIndex).toBe(3)
+})
+
+it('starts the viewer at its initial index and holds an instant target through stale events', () => {
+  const { result, element } = setup(false, 2)
+  expect(result.current.activeIndex).toBe(2)
+  act(() => result.current.goTo(2, 'instant'))
+  expect(element.scrollTo).toHaveBeenCalledWith({ left: 200, behavior: 'instant' })
+  act(() => {
+    element.scrollLeft = 100
+    result.current.onScroll()
+    element.dispatchEvent(new Event('scrollend'))
+    vi.advanceTimersByTime(120)
+  })
+  expect(result.current.activeIndex).toBe(2)
 })

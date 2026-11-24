@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
-export function usePropertyGallery(count: number) {
-  const [activeIndex, setActiveIndex] = useState(0)
+export function usePropertyGallery(count: number, initialIndex = 0) {
+  const [activeIndex, setActiveIndex] = useState(initialIndex)
   const track = useRef<HTMLDivElement>(null)
   const navigation = useRef({ isProgrammatic: false, targetIndex: 0 })
   const idle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -43,7 +43,7 @@ export function usePropertyGallery(count: number) {
   }, [settle])
 
   const goTo = useCallback(
-    (next: number) => {
+    (next: number, behavior: ScrollBehavior = 'auto') => {
       const element = track.current
       const targetIndex = Math.max(0, Math.min(count - 1, next))
       const slide = element?.children[targetIndex] as HTMLElement | undefined
@@ -56,7 +56,7 @@ export function usePropertyGallery(count: number) {
       }, 400)
       element.scrollTo({
         left: slide.offsetLeft - (element.children[0] as HTMLElement).offsetLeft,
-        behavior: 'auto',
+        behavior,
       })
     },
     [count],
