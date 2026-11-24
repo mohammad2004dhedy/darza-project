@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { DecimalInput } from './DecimalInput'
 import { FormField } from './FormField'
 
@@ -66,9 +66,10 @@ it('rejects decimal separators for integer fields and clears timers on unmount',
 
 it('forwards the ref and preserves labels, errors and react-hook-form changes', () => {
   function Form() {
-    const { register, watch } = useForm({ defaultValues: { price: '' } })
+    const { register, control } = useForm({ defaultValues: { price: '' } })
     const registered = register('price')
-    return <FormField label="السعر" error="خطأ"><DecimalInput {...registered} value={watch('price')} onChange={(value) => void registered.onChange({ target: { name: 'price', value } })} maxIntegerDigits={3} maxDecimals={2} /></FormField>
+    const value = useWatch({ control, name: 'price' })
+    return <FormField label="السعر" error="خطأ"><DecimalInput {...registered} value={value} onChange={(value) => void registered.onChange({ target: { name: 'price', value } })} maxIntegerDigits={3} maxDecimals={2} /></FormField>
   }
   render(<Form />)
   const input = screen.getByLabelText('السعر') as HTMLInputElement
