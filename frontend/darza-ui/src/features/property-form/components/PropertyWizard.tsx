@@ -1,3 +1,6 @@
+import { Controller } from 'react-hook-form'
+import { DecimalInput } from '../../../components/ui/DecimalInput'
+import { numericLimits } from '../numericLimits'
 import { ImagePlus, KeyRound, Tag } from 'lucide-react'
 import { lazy, Suspense, type ReactNode } from 'react'
 import { ConfirmModal } from '../../../components/ui/ConfirmModal'
@@ -131,26 +134,22 @@ function NumberField({
   wizard,
   name,
   label,
-  integer = false,
   required = false,
 }: StepProps & {
   name: 'price' | 'areaSize' | 'rooms' | 'bathrooms'
   label: string
-  integer?: boolean
   required?: boolean
 }) {
   return (
-    <FormField
-      label={label}
-      required={required}
-      error={wizard.form.formState.errors[name]?.message}
-    >
-      <Input
-        {...wizard.registerNumber(name)}
-        dir="ltr"
-        inputMode={integer ? 'numeric' : 'decimal'}
-      />
-    </FormField>
+    <Controller
+      control={wizard.form.control}
+      name={name}
+      render={({ field }) => (
+        <FormField label={label} required={required} error={wizard.form.formState.errors[name]?.message}>
+          <DecimalInput {...field} {...numericLimits[name]} dir="ltr" />
+        </FormField>
+      )}
+    />
   )
 }
 
@@ -201,8 +200,8 @@ function SpecificationsStep({ wizard }: StepProps) {
       {form.watch('propertyType') !== 'LAND' && (
         <>
           <div className="grid gap-5 sm:grid-cols-2">
-            <NumberField wizard={wizard} name="rooms" label="عدد الغرف" integer />
-            <NumberField wizard={wizard} name="bathrooms" label="عدد الحمامات" integer />
+            <NumberField wizard={wizard} name="rooms" label="عدد الغرف" />
+            <NumberField wizard={wizard} name="bathrooms" label="عدد الحمامات" />
           </div>
           <FormField label="مفروش" error={form.formState.errors.furnished?.message}>
             <Select {...form.register('furnished')} options={optionalBooleanOptions} />
