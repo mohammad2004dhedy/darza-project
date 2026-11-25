@@ -140,7 +140,7 @@ public class PropertyQueryService {
                 .map(property->PropertyMapper.toPropertyCardResponse(
                         property,
                         propertyImagePaths.get(property.getId()),
-                        true,
+                        false,
                         bucketUrl
                 ))
                 .toList();
