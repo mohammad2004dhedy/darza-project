@@ -73,7 +73,7 @@ export function useAccountForm(profile: MyProfileUserResponse) {
       form.reset(form.getValues())
       await cache.invalidateQueries({ queryKey: ['users'] })
       showToast('تم حفظ الحساب')
-      navigate(-1)
+      leave.allowLeave(() => navigate(-1))
     } catch {
       showToast('تم حفظ بياناتك، لكن تعذر حذف الصورة', {
         label: 'إعادة المحاولة',
@@ -120,7 +120,7 @@ export function useAccountForm(profile: MyProfileUserResponse) {
       }
       setAvatar({ kind: 'unchanged' })
       showToast('تم حفظ الحساب')
-      navigate(-1)
+      leave.allowLeave(() => navigate(-1))
     } catch (error) {
       setFormError(
         resolveSubmitError(

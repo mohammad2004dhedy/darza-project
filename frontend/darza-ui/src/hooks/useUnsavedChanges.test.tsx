@@ -4,15 +4,28 @@ import { afterEach, expect, it, vi } from 'vitest'
 import { useUnsavedChanges } from './useUnsavedChanges'
 
 const navigate = vi.fn()
-vi.mock('react-router', () => ({ useNavigate: () => navigate }))
-afterEach(() => { cleanup(); vi.clearAllMocks() })
+vi.mock('react-router', async (original) => ({
+  ...(await original<typeof import('react-router')>()),
+  useNavigate: () => navigate,
+}))
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 function Harness({ active }: { active: boolean }) {
   const leave = useUnsavedChanges(active)
-  return <>
-    <a href="/other">Other</a>
-    <button onClick={() => leave.requestLeave(() => navigate(-1))}>Cancel edit</button>
-    {leave.confirming && <><button onClick={leave.confirm}>Leave</button><button onClick={leave.cancel}>Stay</button></>}
-  </>
+  return (
+    <>
+      <a href="/other">Other</a>
+      <button onClick={() => leave.requestLeave(() => navigate(-1))}>Cancel edit</button>
+      {leave.confirming && (
+        <>
+          <button onClick={leave.confirm}>Leave</button>
+          <button onClick={leave.cancel}>Stay</button>
+        </>
+      )}
+    </>
+  )
 }
 it('warns before unload only while dirty and cleans up on unmount', () => {
   const view = render(<Harness active={false} />)

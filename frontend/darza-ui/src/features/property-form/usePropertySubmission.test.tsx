@@ -6,8 +6,10 @@ import { ApiError } from '../../api/client'
 import * as api from './api'
 import { defaultValues } from './schema'
 import { usePropertyWizard } from './usePropertyWizard'
+import { NavigationGuardContext } from '../../hooks/navigationGuardContext'
 
-const { navigate, toast } = vi.hoisted(() => ({ navigate: vi.fn(), toast: vi.fn() }))
+const { navigate, toast, allow } = vi.hoisted(() => ({ navigate: vi.fn(), toast: vi.fn(), allow: vi.fn((action: () => void) => action()) }))
+const guard = { setActive: vi.fn(), blocked: false, proceed: vi.fn(), reset: vi.fn(), allow }
 import { MemoryRouter } from 'react-router'
 vi.mock('react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router')>()),
@@ -44,7 +46,7 @@ async function setup(count = 2) {
   const hook = renderHook(() => usePropertyWizard(), {
     wrapper: ({ children }) => (
       <QueryClientProvider client={client}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <MemoryRouter><NavigationGuardContext.Provider value={guard}>{children}</NavigationGuardContext.Provider></MemoryRouter>
       </QueryClientProvider>
     ),
   })
@@ -106,6 +108,7 @@ it('waits for every upload before POST and preserves displayed URL/path pairing'
   expect(events).toEqual(['urls', 'https://storage.example/0', 'https://storage.example/1', 'post'])
   expect(post.mock.calls[0][0].imagePaths).toEqual(urls(2).imagePaths)
   expect(post.mock.calls[0][0].price).toBe(0)
+  expect(allow).toHaveBeenCalledOnce()
   expect(navigate).toHaveBeenCalledWith('/properties/9')
   expect(toast).toHaveBeenCalledWith('تم إرسال إعلانك للمراجعة وسيظهر للعامة بعد الموافقة')
   expect(invalidate.mock.calls.map(([arg]) => arg?.queryKey)).toEqual(
