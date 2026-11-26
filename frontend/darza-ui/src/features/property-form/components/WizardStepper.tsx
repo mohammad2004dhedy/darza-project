@@ -18,12 +18,13 @@ interface Props {
   editMode?: boolean
   step: number
   completed: boolean[]
+  warnings?: boolean[]
   canVisit: (index: number) => boolean
   onStep: (index: number) => void
   busy: boolean
 }
 
-export function WizardStepper({ step, completed, onStep, busy }: Props) {
+export function WizardStepper({ step, completed, warnings = [], onStep, busy }: Props) {
   return (
     <nav aria-label="خطوات الإعلان" className="space-y-4">
       <p className="font-bold md:hidden">{stepTitles[step]}</p>
@@ -31,7 +32,7 @@ export function WizardStepper({ step, completed, onStep, busy }: Props) {
         {stepTitles.map((title, index) => {
           const current = index === step
           const done = !current && completed[index] && index !== 6
-          const invalid = !completed[index] && index !== 6
+          const invalid = !completed[index] && warnings[index] && index !== 6
           const Icon = done ? Check : icons[index]
           return (
             <li key={title} className="relative flex min-w-0 flex-1 justify-center">

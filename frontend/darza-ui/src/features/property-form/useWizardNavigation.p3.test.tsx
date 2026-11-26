@@ -52,6 +52,22 @@ function expectStep(step: number) {
 
 for (const editMode of [false, true]) {
   const mode = editMode ? 'edit' : 'create'
+  it(`${mode}: valid default specifications stay neutral until visited`, async () => {
+    mount(editMode, 0)
+    const completed = () => JSON.parse(screen.getByTestId('completed').textContent!)
+    expect(completed()[2]).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
+    await waitFor(() => expectStep(1))
+    expect(completed()[2]).toBe(false)
+    fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
+    await waitFor(() => expectStep(2))
+    fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
+    await waitFor(() => expectStep(3))
+    expect(completed()[2]).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'السابق' }))
+    await waitFor(() => expectStep(2))
+    expect(completed()[2]).toBe(true)
+  })
   it.each(['earlier step', 'later step', 'التالي', 'حفظ والعودة للمراجعة'])(
     `${mode}: clearing a required field blocks %s, shows errors and focuses the first invalid field`,
     async (action) => {
