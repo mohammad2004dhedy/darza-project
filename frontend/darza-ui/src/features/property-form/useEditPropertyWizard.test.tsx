@@ -353,7 +353,7 @@ it.each([false, true])('edit Next blocks a cleared title and completion updates 
   expect(result.current.form.getFieldState('title').error?.message).toBe('أدخل عنوان الإعلان')
   act(() => result.current.form.setValue('title', 'عنوان مصحح'))
   expect(result.current.completed[5]).toBe(true)
-  expect(result.current.completed[6]).toBe(true)
+  expect(result.current.completed[6]).toBe(fromReview)
   await act(async () => result.current.next())
   expect(result.current.step).toBe(6)
 })
