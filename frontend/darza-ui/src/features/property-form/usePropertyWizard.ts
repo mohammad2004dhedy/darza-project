@@ -14,8 +14,6 @@ import { editValues } from './editValues'
 import { invalidatePropertyQueries } from './invalidate'
 import { buildPayload, defaultValues, formSchema, normalizeNumber, type FormValues } from './schema'
 import { useImageUploader } from './useImageUploader'
-import { DraftStorage } from './DraftStorage'
-import { usePropertyDraft } from './usePropertyDraft'
 
 import { stepFields, useWizardNavigation } from './useWizardNavigation'
 
@@ -25,10 +23,9 @@ type NumberField = 'price' | 'areaSize' | 'rooms' | 'bathrooms' | 'latitude' | '
 export function usePropertyWizard(property?: PropertyDetailsResponse) {
   const initial = useRef(property).current
   const { userId } = useAuth()
-  const [draft] = useState(() => !initial && userId != null ? DraftStorage.read(userId) : null)
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initial ? editValues(initial) : draft ? { ...defaultValues, ...draft.values, imagePaths: [] } : defaultValues,
+    defaultValues: initial ? editValues(initial) : defaultValues,
   })
   const uploader = useImageUploader(initial?.images)
   const initialImages = useRef(initial ? uploader.items.map((item) => item.id).join(',') : '')
@@ -78,12 +75,12 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
   }, [uploader.items, setValue])
 
   const currentValues = useWatch({ control: form.control })
-  const [baseline, setBaseline] = useState(() => initial ? editValues(initial) : null)
-  const unsaved = Boolean(baseline && (
+  const [baseline, setBaseline] = useState(() => initial ? editValues(initial) : defaultValues)
+  const unsaved = Boolean(
     (Object.keys(baseline) as (keyof FormValues)[]).some((key) =>
       JSON.stringify(currentValues[key]) !== JSON.stringify(baseline[key]),
     ) || uploader.items.map((item) => item.id).join(',') !== initialImages.current
-  ))
+  )
   const leave = useUnsavedChanges(unsaved)
 
   function imagesReady() {
@@ -109,10 +106,8 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
       uploader.items.length >= 1 &&
       uploader.items.length <= 8 &&
       uploader.items.every((item) => item.kind === 'existing' || Boolean(item.blob)),
-    draft?.step,
   )
   const { step } = navigation
-  const propertyDraft = usePropertyDraft(form, initial ? null : userId, step, uploader.items.length > 0, draft)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [step])
@@ -233,7 +228,6 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
           try {
             const response = await mutation.mutateAsync(values)
             setBaseline(values)
-            propertyDraft.clear()
             form.reset(values)
             initialImages.current = uploader.items.map((item) => item.id).join(',')
             setConfirming(false)
@@ -295,12 +289,5 @@ export function usePropertyWizard(property?: PropertyDetailsResponse) {
     locationError: locationState.status === 'error' ? locationState.message : null,
     locating: locationState.status === 'loading',
     chooseLocation,
-    draftRestored: propertyDraft.restored,
-    draftImagesMissing: propertyDraft.missingImages,
-    restartDraft: () => {
-      propertyDraft.reset()
-      for (const image of uploader.items) uploader.removeImage(image.id)
-      navigation.setStep(0)
-    },
   }
 }

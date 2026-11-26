@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePropertyWizard } from './usePropertyWizard'
+import { defaultValues } from './schema'
 import type { UploadImage } from './useImageUploader'
 import type { PropertyDetailsResponse } from '../../types/api'
 
@@ -114,15 +115,59 @@ describe('create wizard', () => {
     })
     expect(result.current.form.getValues('townId')).toBe('')
   })
-  it('does not block beforeunload in create mode because drafts cover edits', () => {
-    const { unmount } = setup()
-    const event = new Event('beforeunload', { cancelable: true })
-    window.dispatchEvent(event)
-    expect(event.defaultPrevented).toBe(false)
+  it('guards changed create forms and stops guarding after cleanup', () => {
+    mocks.items = []
+    const { result, unmount } = setup()
+    const clean = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(clean)
+    expect(clean.defaultPrevented).toBe(false)
+    act(() => result.current.form.setValue('title', 'إعلان جديد'))
+    expect(result.current.unsaved).toBe(true)
+    const dirty = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(dirty)
+    expect(dirty.defaultPrevented).toBe(true)
+    act(() => result.current.form.setValue('title', ''))
+    expect(result.current.unsaved).toBe(false)
     unmount()
     const after = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(after)
     expect(after.defaultPrevented).toBe(false)
+  })
+  it('guards image-only changes in create mode and clears the guard after removal', () => {
+    mocks.items = []
+    const { result, rerender } = setup()
+    expect(result.current.unsaved).toBe(false)
+    mocks.items = [{ id: 'processing', kind: 'new', url: 'blob:processing', status: 'processing' }]
+    rerender()
+    expect(result.current.unsaved).toBe(true)
+    mocks.items = []
+    rerender()
+    expect(result.current.unsaved).toBe(false)
+  })
+  it('ignores old drafts and opens a clean create form on every entry without saving', () => {
+    mocks.items = []
+    const saved = JSON.stringify({ version: 1, savedAt: Date.now(), step: 5, values: { ...defaultValues, title: 'مسودة قديمة', hadImages: true } })
+    localStorage.setItem('darza:draft:property:7', saved)
+    const first = setup()
+    expect(first.result.current.form.getValues()).toEqual(defaultValues)
+    expect(first.result.current.step).toBe(0)
+    act(() => first.result.current.form.setValue('title', 'تغييرات لن تحفظ'))
+    first.unmount()
+    expect(localStorage.getItem('darza:draft:property:7')).toBe(saved)
+    const second = setup()
+    expect(second.result.current.form.getValues()).toEqual(defaultValues)
+    expect(second.result.current.unsaved).toBe(false)
+  })
+  it('only warns about incomplete steps after interaction or a validation attempt', async () => {
+    mocks.items = []
+    const { result } = setup()
+    expect(result.current.warnings.every((warning) => !warning)).toBe(true)
+    act(() => result.current.form.setValue('title', ' ', { shouldDirty: true }))
+    expect(result.current.warnings[5]).toBe(true)
+    expect(result.current.warnings[0]).toBe(false)
+    await act(async () => result.current.next())
+    expect(result.current.warnings[0]).toBe(true)
+    expect(result.current.warnings[1]).toBe(false)
   })
   it('rounds geolocation, clears it, and shows permission errors', () => {
     const get = vi.fn()
