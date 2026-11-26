@@ -261,7 +261,6 @@ function ImagesStep({ wizard }: StepProps) {
   const disabled = uploader.items.length >= 8 || uploader.isUploading
   return (
     <div className="space-y-4">
-      {wizard.draftImagesMissing && <p role="status" className="text-sm text-text-muted">الصور لا يمكن استرجاعها، يرجى اختيارها من جديد</p>}
       <FormField label="إضافة صور" required error={wizard.form.formState.errors.imagePaths?.message} hint="حتى 8 صور. الصورة الأولى هي صورة الغلاف.">
         <label aria-disabled={disabled} className={`inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-4 font-semibold ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
           <ImagePlus aria-hidden="true" className="size-5" />
@@ -409,12 +408,12 @@ export function PropertyWizard({ wizard }: StepProps) {
     <form noValidate onSubmit={wizard.onSubmit} className="mx-auto max-w-2xl space-y-6 pb-28">
       <header className="space-y-4">
         <h1 className="text-2xl font-bold">{wizard.editMode ? 'تعديل الإعلان' : 'إضافة إعلان'}</h1>
-        {wizard.draftRestored && <Button size="sm" variant="ghost" onClick={wizard.restartDraft}>بدء من جديد</Button>}
         <p className="text-sm text-text-muted">الخطوة {wizard.step + 1} من 7</p>
         <WizardStepper
           editMode={wizard.editMode}
           step={wizard.step}
           completed={wizard.completed}
+          warnings={wizard.warnings}
           canVisit={wizard.canVisit}
           onStep={wizard.setStep}
           busy={wizard.busy}
