@@ -10,7 +10,6 @@ import {
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthStorage } from '../lib/authStorage'
-import { DraftStorage } from '../features/property-form/DraftStorage'
 import { setUnauthorizedHandler } from '../api/client'
 import type { LoginResponse } from '../types/api'
 import { useToast } from '../components/ui/useToast'
@@ -41,7 +40,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const endSession = useCallback(
     (expired: boolean) => {
       if (!activeSession.current) return
-      DraftStorage.clear(activeSession.current.userId)
       activeSession.current = null
       AuthStorage.clear()
       queryClient.clear()
