@@ -365,7 +365,7 @@ it('updates the title station warning live when a populated title is cleared and
   fireEvent.change(title, { target: { value: 'عنوان جديد' } })
   expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).toBeNull()
   fireEvent.change(title, { target: { value: '' } })
-  expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).not.toBeNull()
+  await waitFor(() => expect(station.querySelector('[aria-label="خطوة غير مكتملة"]')).not.toBeNull())
   fireEvent.click(screen.getByRole('button', { name: 'التالي' }))
   await waitFor(() => expect(document.activeElement).toBe(title))
   expect(station.getAttribute('aria-current')).toBe('step')
