@@ -1,4 +1,5 @@
-import { BrowserRouter } from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { NavigationGuardProvider } from './hooks/NavigationGuardProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ApiError } from './api/client'
 import { AuthProvider } from './context/AuthContext'
@@ -17,9 +18,9 @@ const queryClient = new QueryClient({
     },
   },
 })
-export default function App() {
+function AppContent() {
   return (
-    <BrowserRouter>
+    <NavigationGuardProvider>
       <OverlayRouteCleanup />
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
@@ -28,6 +29,12 @@ export default function App() {
           </AuthProvider>
         </ToastProvider>
       </QueryClientProvider>
-    </BrowserRouter>
+    </NavigationGuardProvider>
   )
+}
+
+const router = createBrowserRouter([{ path: '*', element: <AppContent /> }])
+
+export default function App() {
+  return <RouterProvider router={router} />
 }

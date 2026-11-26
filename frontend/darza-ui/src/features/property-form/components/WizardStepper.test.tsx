@@ -34,7 +34,7 @@ it('preserves create progress and current styling while allowing navigation to v
 
 
 it.each([false, true])('replaces completion with a warning when a field is cleared and restores it when fixed (edit=%s)', (editMode) => {
-  const props = { editMode, step: 3, canVisit: () => true, onStep: vi.fn(), busy: false }
+  const props = { editMode, warnings: Array<boolean>(7).fill(true), step: 3, canVisit: () => true, onStep: vi.fn(), busy: false }
   const completed = Array<boolean>(7).fill(true)
   const view = render(<WizardStepper {...props} completed={completed} />)
   const station = () => screen.getAllByRole('button')[1]
@@ -54,4 +54,10 @@ it('disables every station while busy', () => {
   screen.getAllByRole('button').forEach((button) => {
     expect((button as HTMLButtonElement).disabled).toBe(true)
   })
+})
+
+it('does not warn about untouched incomplete steps', () => {
+  render(<WizardStepper step={0} completed={Array<boolean>(7).fill(false)} canVisit={() => true} onStep={vi.fn()} busy={false} />)
+  expect(screen.queryByLabelText('خطوة غير مكتملة')).toBeNull()
+  expect(screen.getAllByRole('button')[0].firstElementChild?.className).toContain('border-primary')
 })

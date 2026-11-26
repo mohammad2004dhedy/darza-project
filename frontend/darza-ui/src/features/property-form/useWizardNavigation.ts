@@ -3,7 +3,7 @@ import { useWatch, type FieldPath, type UseFormReturn } from 'react-hook-form'
 import { useLocation, useSearchParams } from 'react-router'
 import { formSchema, type FormValues } from './schema'
 
-export const stepFields: readonly FieldPath<FormValues>[][] = [
+export const stepFields: readonly (keyof FormValues)[][] = [
   ['propertyType', 'listingType'],
   ['price', 'currency', 'rentPeriod'],
   ['areaSize', 'rooms', 'bathrooms', 'furnished', 'hasBalcony'],
@@ -17,7 +17,6 @@ export function useWizardNavigation(
   form: UseFormReturn<FormValues>,
   editMode: boolean,
   imagesReady: boolean,
-  restoredStep?: number,
 ) {
   const [params, setParams] = useSearchParams()
   const location = useLocation()
@@ -32,9 +31,12 @@ export function useWizardNavigation(
         !result.error.issues.some((issue) => fields.some((field) => field === issue.path[0]))),
   )
   valid[6] = valid.slice(0, 6).every(Boolean)
+  const { dirtyFields, touchedFields, errors } = form.formState
+  const warnings = stepFields.map((fields, index) => !valid[index] && fields.some(
+    (field) => dirtyFields[field] || touchedFields[field] || errors[field],
+  ))
   const firstInvalid = valid.findIndex((value) => !value)
-  const safeRestoredStep = Math.min(restoredStep ?? 0, firstInvalid < 0 ? 6 : firstInvalid)
-  const requested = params.has('step') ? Number(params.get('step')) - 1 : safeRestoredStep
+  const requested = params.has('step') ? Number(params.get('step')) - 1 : 0
   const returningToReview = params.get('from') === 'review'
   function canVisit(index: number) {
     if (!Number.isInteger(index) || index < 0 || index > 6) return false
@@ -46,7 +48,7 @@ export function useWizardNavigation(
       external && keepReview && firstInvalid >= 0
     )
     return {
-      index: blocked ? (firstInvalid < 0 ? safeRestoredStep : firstInvalid) : index,
+      index: blocked ? (firstInvalid < 0 ? 0 : firstInvalid) : index,
       keepReview: keepReview && !blocked,
     }
   }
@@ -104,6 +106,7 @@ export function useWizardNavigation(
     returningToReview,
     canVisit,
     completed: valid,
+    warnings,
     go,
     setStep: (index: number) => {
       goToStep(index, {})
